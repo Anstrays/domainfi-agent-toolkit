@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a problem with the static site, documentation, or repository validator.
+title: "[bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report. Please do not include
+        secrets, tokens, or wallet seed phrases anywhere in this issue.
+  - type: textarea
+    id: description
+    attributes:
+      label: What is wrong?
+      description: A clear and concise description of the problem.
+      placeholder: When I open the project page on Safari 17, the hero section overflows...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Provide minimal steps so we can reproduce the issue.
+      placeholder: |
+        1. Visit https://anstrays.github.io/domainfi-agent-toolkit/
+        2. Resize browser to 360px wide
+        3. Observe ...
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser / OS / device, or runtime info if it is a validator/CI bug.
+      placeholder: Safari 17.4 on macOS 14
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have not included any secrets, tokens, or private keys.
+          required: true

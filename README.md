@@ -2,9 +2,26 @@
 
 AI-powered agents and developer templates for discovering, monitoring, and acting on tokenized domain opportunities on Doma Protocol.
 
-[Live project page](https://anstrays.github.io/domainfi-agent-toolkit/) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Security](SECURITY.md)
+[![Validate static site](https://github.com/Anstrays/domainfi-agent-toolkit/actions/workflows/validate.yml/badge.svg?branch=main)](https://github.com/Anstrays/domainfi-agent-toolkit/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Status: proposal](https://img.shields.io/badge/status-proposal%20%26%20prototype-7cf7c9)](docs/ROADMAP.md)
+[![GitHub Pages](https://img.shields.io/badge/site-anstrays.github.io-78a8ff?logo=githubpages&logoColor=white)](https://anstrays.github.io/domainfi-agent-toolkit/)
+
+[Live project page](https://anstrays.github.io/domainfi-agent-toolkit/) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Grant scope](docs/GRANT_SCOPE.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
 > Status: early Doma Forge grant proposal and prototype scope. This repository currently contains the public project page and technical plan; production Doma integrations will be added after SDK/API/testnet access is available.
+
+## Table of contents
+
+- [Why this exists](#why-this-exists)
+- [Initial workflows](#initial-workflows)
+- [Planned Doma integration](#planned-doma-integration)
+- [Proposed milestones](#proposed-milestones)
+- [Tech direction](#tech-direction)
+- [Local development](#local-development)
+- [Security posture](#security-posture)
+- [Doma Forge application summary](#doma-forge-application-summary)
+- [License](#license)
 
 ## Why this exists
 
@@ -77,6 +94,34 @@ The first prototype is expected to use:
 - scheduled jobs for monitoring
 - lightweight browser/API automation where needed
 - modular provider interface for Doma data sources
+
+## Local development
+
+The repository today is a static landing page plus Markdown documentation. There are no runtime dependencies and no build step.
+
+Preview the site locally:
+
+```bash
+# Option A: open the file directly
+xdg-open index.html        # Linux
+open index.html            # macOS
+
+# Option B: serve over HTTP (recommended, matches GitHub Pages)
+python3 -m http.server 8080
+# then visit http://localhost:8080/
+```
+
+Run the repository validator (the same check CI runs):
+
+```bash
+python3 scripts/validate_repo.py
+```
+
+The validator is dependency-free and verifies:
+
+- required documents are present
+- no obvious secret patterns are committed
+- `index.html` ships safe HTML (no executable scripts, no inline event handlers, no broken anchors, external links carry `rel="noopener noreferrer"`, images have `alt` text, basic SEO meta tags are present)
 
 ## Security posture
 
