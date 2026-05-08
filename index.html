@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DomainFi Agent Toolkit</title>
+  <meta name="description" content="AI-powered agents and developer templates for discovering, monitoring, and acting on tokenized domain opportunities on Doma Protocol." />
+  <style>
+    :root {
+      --bg: #080b12;
+      --surface: #0f1420;
+      --surface-2: #151c2b;
+      --ink: #f4f7fb;
+      --muted: #9ca8ba;
+      --line: rgba(255,255,255,.11);
+      --accent: #7cf7c9;
+      --accent-2: #78a8ff;
+      --warning: #ffd166;
+      --shadow: 0 24px 80px rgba(0,0,0,.35);
+      --radius: 24px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(124,247,201,.16), transparent 28rem),
+        radial-gradient(circle at 88% 18%, rgba(120,168,255,.18), transparent 30rem),
+        linear-gradient(180deg, #080b12 0%, #0b0f18 48%, #070910 100%);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 28px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+
+    .mark {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 0 1px rgba(255,255,255,.22) inset, 0 10px 30px rgba(124,247,201,.18);
+      display: grid;
+      place-items: center;
+      color: #07100d;
+      font-weight: 900;
+    }
+
+    nav { display: flex; gap: 18px; color: var(--muted); font-size: 14px; }
+    nav a:hover { color: var(--ink); }
+
+    .hero {
+      padding: 80px 0 64px;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      border-radius: 999px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(48px, 7vw, 88px);
+      line-height: .92;
+      letter-spacing: -.075em;
+      text-wrap: balance;
+    }
+
+    .lead {
+      margin: 26px 0 0;
+      color: #c9d2df;
+      font-size: clamp(18px, 2vw, 22px);
+      line-height: 1.55;
+      max-width: 690px;
+      text-wrap: pretty;
+    }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+    .btn {
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .btn.primary { background: var(--accent); color: #07100d; border-color: transparent; }
+    .btn.secondary { background: rgba(255,255,255,.05); color: var(--ink); }
+
+    .terminal-card {
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .terminal-top {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: #ff6b6b; }
+    .dot:nth-child(2) { background: #ffd166; }
+    .dot:nth-child(3) { background: #7cf7c9; }
+    pre {
+      margin: 0;
+      padding: 22px;
+      color: #dce6f4;
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.65;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+    .comment { color: #7f8da3; }
+    .green { color: var(--accent); }
+    .blue { color: var(--accent-2); }
+    .yellow { color: var(--warning); }
+
+    section { padding: 58px 0; }
+    .section-head { max-width: 760px; margin-bottom: 28px; }
+    h2 { margin: 0; font-size: clamp(32px, 4vw, 52px); letter-spacing: -.055em; line-height: 1; }
+    .section-head p { color: var(--muted); font-size: 18px; line-height: 1.6; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card {
+      padding: 24px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.045);
+      border-radius: 22px;
+      min-height: 220px;
+    }
+    .card strong { display: block; font-size: 18px; margin-bottom: 12px; letter-spacing: -.02em; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.55; }
+    .num { color: var(--accent); font-weight: 900; margin-bottom: 16px; }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .step {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      background: rgba(255,255,255,.035);
+    }
+    .step span { color: var(--accent-2); font-size: 13px; font-weight: 900; }
+    .step h3 { margin: 10px 0 8px; font-size: 17px; }
+    .step p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+    .cta {
+      margin: 64px 0 80px;
+      padding: 34px;
+      border-radius: 28px;
+      border: 1px solid rgba(124,247,201,.25);
+      background: linear-gradient(135deg, rgba(124,247,201,.12), rgba(120,168,255,.08));
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: center;
+    }
+    .cta p { color: #c9d2df; margin: 10px 0 0; line-height: 1.5; max-width: 700px; }
+
+    footer { padding: 28px 0 44px; color: var(--muted); border-top: 1px solid var(--line); font-size: 14px; }
+
+    @media (max-width: 860px) {
+      nav { display: none; }
+      .hero { grid-template-columns: 1fr; padding-top: 40px; }
+      .grid, .flow { grid-template-columns: 1fr; }
+      .cta { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#top" aria-label="DomainFi Agent Toolkit home">
+        <span class="mark">D</span>
+        <span>DomainFi Agent Toolkit</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#workflows">Workflows</a>
+        <a href="#integration">Doma Integration</a>
+        <a href="#milestones">Milestones</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <div class="hero">
+        <div>
+          <div class="eyebrow">Built for Doma Forge · DomainFi automation layer</div>
+          <h1>AI agents for tokenized domain markets.</h1>
+          <p class="lead">DomainFi Agent Toolkit helps users and developers discover, monitor, and act on Doma-powered domain opportunities through practical bots, alerts, scoring workflows, and integration templates.</p>
+          <div class="actions">
+            <a class="btn primary" href="#workflows">View workflows</a>
+            <a class="btn secondary" href="https://doma.xyz/forge" target="_blank" rel="noreferrer">Doma Forge</a>
+          </div>
+        </div>
+
+        <div class="terminal-card" aria-label="Example agent output">
+          <div class="terminal-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <pre><span class="comment">$ domainfi-agent scan --watchlist brandable-ai</span>
+
+<span class="green">Found 42 domain opportunities</span>
+
+<span class="blue">Top match</span>
+  domain: agentdesk.example
+  score: 91/100
+  reason: short, brandable, AI tooling category
+
+<span class="yellow">Alert</span>
+  price changed on watched domain
+  send: Telegram + Discord</pre>
+        </div>
+      </div>
+
+      <section id="workflows">
+        <div class="section-head">
+          <h2>Three useful workflows first.</h2>
+          <p>No fake dashboard theater. The first prototype focuses on actions that real DomainFi users and developers need repeatedly.</p>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <div class="num">01</div>
+            <strong>Domain discovery agent</strong>
+            <p>Scans domain inventory and marketplace data, then ranks opportunities by category, relevance, brandability, pricing, and liquidity signals.</p>
+          </article>
+          <article class="card">
+            <div class="num">02</div>
+            <strong>Portfolio and alerts agent</strong>
+            <p>Tracks owned domains, watchlists, status changes, expiry events, renewal reminders, pricing changes, and marketplace activity.</p>
+          </article>
+          <article class="card">
+            <div class="num">03</div>
+            <strong>Developer templates</strong>
+            <p>Starter bots, API wrappers, and workflow examples for builders integrating Doma data into dashboards, wallets, marketplaces, and agents.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="integration">
+        <div class="section-head">
+          <h2>Doma as the domain layer. Agents as the action layer.</h2>
+          <p>The toolkit is designed to plug into Doma SDKs, APIs, marketplace data, and onchain domain primitives as they become available.</p>
+        </div>
+        <div class="grid">
+          <article class="card"><strong>Data access</strong><p>Query Doma inventory, ownership state, domain status, marketplace listings, and event surfaces.</p></article>
+          <article class="card"><strong>Scoring pipeline</strong><p>Normalize domain data into ranked opportunities with explainable filters and user-defined strategies.</p></article>
+          <article class="card"><strong>Notification adapters</strong><p>Deliver alerts through Telegram, Discord, CLI, webhooks, or future wallet-facing interfaces.</p></article>
+        </div>
+      </section>
+
+      <section id="milestones">
+        <div class="section-head">
+          <h2>Milestone-based build plan.</h2>
+          <p>A compact path from research to working public demo.</p>
+        </div>
+        <div class="flow">
+          <div class="step"><span>WEEK 1</span><h3>Architecture</h3><p>Map Doma docs, SDKs, APIs, data model, and agent workflow boundaries.</p></div>
+          <div class="step"><span>WEEK 2–3</span><h3>Prototype</h3><p>Build discovery CLI or bot with filters, watchlists, ranked output, and explanations.</p></div>
+          <div class="step"><span>WEEK 4</span><h3>Alerts</h3><p>Add Telegram/Discord notification examples and portfolio/watchlist monitoring flow.</p></div>
+          <div class="step"><span>WEEK 5–6</span><h3>Public demo</h3><p>Ship documentation, templates, and a write-up on agentic DomainFi workflows.</p></div>
+        </div>
+      </section>
+
+      <div class="cta">
+        <div>
+          <h2>Built to make DomainFi actionable.</h2>
+          <p>Domains already have mainstream demand. Doma brings them onchain. This toolkit focuses on the agent layer: search, monitor, rank, explain, and notify.</p>
+        </div>
+        <a class="btn primary" href="https://doma.xyz/forge" target="_blank" rel="noreferrer">Apply via Doma Forge</a>
+      </div>
+    </main>
+
+    <footer>
+      DomainFi Agent Toolkit · Early prototype proposal for Doma Forge · MIT License
+    </footer>
+  </div>
+</body>
+</html>
