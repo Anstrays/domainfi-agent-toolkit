@@ -1,0 +1,35 @@
+name: Feature request / proposal feedback
+description: Suggest an improvement to the toolkit, documentation, or grant scope.
+title: "[idea] "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        DomainFi Agent Toolkit is in proposal/prototype mode. Use cases,
+        Doma integration ideas, and developer-template requests are
+        especially welcome.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What problem are you trying to solve, or what gap does this fill?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed direction
+      description: Describe the approach you have in mind, even if it is rough.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you considered and why you ruled them out.
+  - type: input
+    id: scope
+    attributes:
+      label: Which part of the project?
+      description: e.g. discovery agent, alerts, integration templates, docs, CI.

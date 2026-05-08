@@ -3,15 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>DomainFi Agent Toolkit</title>
-  <meta name="description" content="AI-powered agents and developer templates for discovering, monitoring, and acting on tokenized domain opportunities on Doma Protocol." />
+  <title>DomainFi Agent Toolkit · Agents and templates for Doma Protocol</title>
+  <meta name="description" content="DomainFi Agent Toolkit is an open-source plan for AI agents, alerts, and developer templates that turn Doma Protocol domain data into actionable workflows." />
+  <meta name="keywords" content="DomainFi, Doma Protocol, tokenized domains, AI agents, domain discovery, portfolio alerts, web3 domains, developer toolkit" />
+  <meta name="author" content="DomainFi Agent Toolkit contributors" />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#080b12" />
+  <meta name="color-scheme" content="dark" />
   <meta name="referrer" content="no-referrer" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; upgrade-insecure-requests" />
+  <link rel="canonical" href="https://anstrays.github.io/domainfi-agent-toolkit/" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%237cf7c9'/%3E%3Cstop offset='1' stop-color='%2378a8ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-size='38' font-weight='900' fill='%2307100d'%3ED%3C/text%3E%3C/svg%3E" />
   <meta property="og:title" content="DomainFi Agent Toolkit" />
   <meta property="og:description" content="AI-powered agents and developer templates for Doma Protocol DomainFi workflows." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://anstrays.github.io/domainfi-agent-toolkit/" />
+  <meta property="og:site_name" content="DomainFi Agent Toolkit" />
   <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="DomainFi Agent Toolkit" />
+  <meta name="twitter:description" content="AI-powered agents and developer templates for Doma Protocol DomainFi workflows." />
   <style>
     :root {
       --bg: #080b12;
@@ -40,7 +50,27 @@
     }
 
     a { color: inherit; text-decoration: none; }
+    a:focus-visible,
+    button:focus-visible,
+    .btn:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 6px;
+    }
     .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      background: var(--accent);
+      color: #07100d;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      z-index: 10;
+    }
+    .skip-link:focus { left: 12px; top: 12px; }
 
     header {
       display: flex;
@@ -69,8 +99,21 @@
       font-weight: 900;
     }
 
-    nav { display: flex; gap: 18px; color: var(--muted); font-size: 14px; }
+    nav { display: flex; gap: 18px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
     nav a:hover { color: var(--ink); }
+    .repo-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .repo-link:hover { background: rgba(255,255,255,.06); }
+    .repo-link svg { width: 16px; height: 16px; fill: currentColor; }
 
     .hero {
       padding: 80px 0 64px;
@@ -205,6 +248,9 @@
     .cta p { color: #c9d2df; margin: 10px 0 0; line-height: 1.5; max-width: 700px; }
 
     footer { padding: 28px 0 44px; color: var(--muted); border-top: 1px solid var(--line); font-size: 14px; }
+    .footer-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; }
+    .footer-links { display: inline-flex; gap: 16px; flex-wrap: wrap; }
+    .footer-links a:hover { color: var(--ink); }
 
     @media (max-width: 860px) {
       nav { display: none; }
@@ -215,6 +261,7 @@
   </style>
 </head>
 <body>
+  <a class="skip-link" href="#top">Skip to content</a>
   <div class="wrap">
     <header>
       <a class="brand" href="#top" aria-label="DomainFi Agent Toolkit home">
@@ -225,6 +272,11 @@
         <a href="#workflows">Workflows</a>
         <a href="#integration">Doma Integration</a>
         <a href="#milestones">Milestones</a>
+        <a href="#docs">Docs</a>
+        <a class="repo-link" href="https://github.com/Anstrays/domainfi-agent-toolkit" target="_blank" rel="noopener noreferrer" aria-label="DomainFi Agent Toolkit on GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.1c-3.2.7-3.87-1.36-3.87-1.36-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.76 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.27-5.24-5.66 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.45.11-3.03 0 0 .96-.31 3.15 1.17a10.95 10.95 0 0 1 5.74 0c2.19-1.48 3.15-1.17 3.15-1.17.62 1.58.23 2.74.11 3.03.74.8 1.18 1.82 1.18 3.07 0 4.4-2.69 5.37-5.25 5.65.41.36.78 1.07.78 2.16v3.2c0 .31.21.67.8.56C20.21 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5z"/></svg>
+          GitHub
+        </a>
       </nav>
     </header>
 
@@ -306,6 +358,45 @@
         </div>
       </section>
 
+      <section id="docs">
+        <div class="section-head">
+          <h2>Read the plan in full.</h2>
+          <p>Everything is open. Architecture, roadmap, security posture, and grant scope live in the repository as plain Markdown.</p>
+        </div>
+        <div class="grid">
+          <article class="card">
+            <strong>Architecture</strong>
+            <p>Modules, data flow, trust boundaries, and non-goals for the first milestone.</p>
+            <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer">Open ARCHITECTURE.md</a></p>
+          </article>
+          <article class="card">
+            <strong>Roadmap</strong>
+            <p>Phased delivery plan from research and prototype to alerts, templates, and hardening.</p>
+            <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener noreferrer">Open ROADMAP.md</a></p>
+          </article>
+          <article class="card">
+            <strong>Grant scope</strong>
+            <p>Doma Forge grant proposal: problem, contribution, deliverables, and success criteria.</p>
+            <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/docs/GRANT_SCOPE.md" target="_blank" rel="noopener noreferrer">Open GRANT_SCOPE.md</a></p>
+          </article>
+          <article class="card">
+            <strong>Security policy</strong>
+            <p>Current posture, reporting channel, and rules for future Doma integrations.</p>
+            <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">Open SECURITY.md</a></p>
+          </article>
+          <article class="card">
+            <strong>Contributing</strong>
+            <p>How to propose changes during the proposal/prototype stage and what we look for.</p>
+            <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Open CONTRIBUTING.md</a></p>
+          </article>
+          <article class="card">
+            <strong>Repository</strong>
+            <p>Source on GitHub. Open issues, discussions, and pull requests are welcome.</p>
+            <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit" target="_blank" rel="noopener noreferrer">Open on GitHub</a></p>
+          </article>
+        </div>
+      </section>
+
       <div class="cta">
         <div>
           <h2>Built to make DomainFi actionable.</h2>
@@ -316,8 +407,29 @@
     </main>
 
     <footer>
-      DomainFi Agent Toolkit · Independent early-stage proposal for Doma Forge · Not officially endorsed unless stated · MIT License
+      <div class="footer-row">
+        <span>DomainFi Agent Toolkit · Independent early-stage proposal for Doma Forge · Not officially endorsed unless stated</span>
+        <span class="footer-links">
+          <a href="https://github.com/Anstrays/domainfi-agent-toolkit" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a>
+          <a href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
+        </span>
+      </div>
     </footer>
   </div>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareSourceCode",
+    "name": "DomainFi Agent Toolkit",
+    "description": "AI-powered agents and developer templates for discovering, monitoring, and acting on tokenized domain opportunities on Doma Protocol.",
+    "url": "https://anstrays.github.io/domainfi-agent-toolkit/",
+    "codeRepository": "https://github.com/Anstrays/domainfi-agent-toolkit",
+    "license": "https://opensource.org/licenses/MIT",
+    "programmingLanguage": ["HTML", "CSS"],
+    "applicationCategory": "DeveloperApplication"
+  }
+  </script>
 </body>
 </html>

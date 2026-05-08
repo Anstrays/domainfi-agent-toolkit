@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/Anstrays/domainfi-agent-toolkit/security/advisories/new
+    about: Please report security vulnerabilities privately via GitHub security advisories. See SECURITY.md for details.
+  - name: Doma Forge program
+    url: https://doma.xyz/forge
+    about: Learn more about Doma Forge — DomainFi Agent Toolkit is an independent grant proposal targeting this program.
