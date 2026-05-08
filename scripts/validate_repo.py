@@ -154,12 +154,13 @@ def validate_html() -> None:
                 fail(f"<img> missing alt attribute (src={attrs.get('src','?')})")
         if tag == "a":
             href = attrs.get("href", "")
-            if href.lower().startswith("javascript:"):
+            normalized_href = href.strip().lower()
+            if normalized_href.startswith("javascript:"):
                 fail(f"unsafe javascript URL: {href}")
             if href.startswith("#") and len(href) > 1 and href[1:] not in inspector.ids:
                 fail(f"broken anchor link: {href}")
-            if attrs.get("target") == "_blank":
-                rel = set(attrs.get("rel", "").split())
+            if attrs.get("target", "").strip().lower() == "_blank":
+                rel = {value.lower() for value in attrs.get("rel", "").split()}
                 if not {"noopener", "noreferrer"}.issubset(rel):
                     fail(f"external link missing rel noopener noreferrer: {href}")
 

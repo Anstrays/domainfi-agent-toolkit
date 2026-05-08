@@ -19,7 +19,7 @@ template improvements.
 
 ## Checklist
 
-- [ ] I read [`CONTRIBUTING.md`](../CONTRIBUTING.md) and followed its expectations.
+- [ ] I read [`CONTRIBUTING.md`](https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/CONTRIBUTING.md) and followed its expectations.
 - [ ] No secrets, tokens, private keys, wallet seed phrases, or production credentials are included.
 - [ ] `python3 scripts/validate_repo.py` passes locally.
 - [ ] Documentation/README is updated if the change affects user-visible behavior.
