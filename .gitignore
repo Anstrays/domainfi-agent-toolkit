@@ -1,6 +1,17 @@
-domainfi-agent-toolkit
-========================
+# DomainFi Agent Toolkit
+# Static landing page + proposal README for Doma Forge.
+# Open `index.html` directly in a browser or publish this repo with GitHub Pages.
 
-Static landing page + proposal README for Doma Forge.
+# Local environment
+.env
+.env.*
+!.env.example
 
-Open `index.html` directly in a browser or publish this repo with GitHub Pages.
+# System files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
