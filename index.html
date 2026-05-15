@@ -294,18 +294,18 @@
 
         <div class="terminal-card" aria-label="Example agent output">
           <div class="terminal-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-          <pre><span class="comment">$ domainfi-agent scan --watchlist brandable-ai</span>
+          <pre><span class="comment">$ domainfi-agent scan --watchlist brandable-ai.json</span>
 
-<span class="green">Found 42 domain opportunities</span>
+<span class="green">Watchlists scanned: brandable-ai</span>
+<span class="green">Found 2 domain opportunities</span>
 
-<span class="blue">Top match</span>
-  domain: agentdesk.example
-  score: 91/100
-  reason: short, brandable, AI tooling category
+<span class="blue">#01</span> agentdesk.example  score=58/100  ($1800 on mock-market)
+   + keyword       18  substring keyword match: ['agent']
+   + category      15  category 'ai-tools' matches watchlist
+   + price         10  price $1800 within cap $5000
 
-<span class="yellow">Alert</span>
-  price changed on watched domain
-  send: Telegram + Discord</pre>
+<span class="yellow">[WATCHLIST]</span> agentdesk.example  score 58
+  reason: substring keyword match; category 'ai-tools'</pre>
         </div>
       </div>
 

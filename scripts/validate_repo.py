@@ -31,6 +31,13 @@ REQUIRED_FILES = [
     "docs/ARCHITECTURE.md",
     "docs/ROADMAP.md",
     "docs/GRANT_SCOPE.md",
+    "pyproject.toml",
+    "src/domainfi_toolkit/__init__.py",
+    "src/domainfi_toolkit/cli.py",
+    "src/domainfi_toolkit/agent.py",
+    "src/domainfi_toolkit/scoring.py",
+    "src/domainfi_toolkit/data/sample_inventory.json",
+    "examples/watchlists/brandable-ai.json",
 ]
 SECRET_PATTERNS = [
     re.compile(r"ghp_[A-Za-z0-9_]{20,}"),
@@ -46,6 +53,8 @@ SECRET_PATTERNS = [
 SECRET_SCAN_SKIP = {
     Path("scripts/validate_repo.py"),
 }
+# Directories we should not scan (third-party caches, build artifacts).
+SECRET_SCAN_SKIP_DIR_PARTS = {".git", "__pycache__", ".venv", "venv", "node_modules", "dist", "build", ".pytest_cache", ".mypy_cache", ".ruff_cache"}
 # script type values that are inert (no JavaScript execution).
 INERT_SCRIPT_TYPES = {
     "application/ld+json",
@@ -113,7 +122,9 @@ def validate_required_files() -> None:
 
 def validate_no_secrets() -> None:
     for path in ROOT.rglob("*"):
-        if ".git" in path.parts or not path.is_file():
+        if not path.is_file():
+            continue
+        if any(part in SECRET_SCAN_SKIP_DIR_PARTS for part in path.parts):
             continue
         relative = path.relative_to(ROOT)
         if relative in SECRET_SCAN_SKIP:

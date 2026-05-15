@@ -9,11 +9,12 @@ AI-powered agents and developer templates for discovering, monitoring, and actin
 
 [Live project page](https://anstrays.github.io/domainfi-agent-toolkit/) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Grant scope](docs/GRANT_SCOPE.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
-> Status: early Doma Forge grant proposal and prototype scope. This repository currently contains the public project page and technical plan; production Doma integrations will be added after SDK/API/testnet access is available.
+> Status: early Doma Forge grant proposal and prototype scope. The repository now ships a small dependency-free Python prototype of the discovery agent (mock data, transparent scoring, watchlists, CLI). Production Doma integrations will be added behind the same provider interface once SDK/API/testnet access is available.
 
 ## Table of contents
 
 - [Why this exists](#why-this-exists)
+- [Quickstart](#quickstart)
 - [Initial workflows](#initial-workflows)
 - [Planned Doma integration](#planned-doma-integration)
 - [Proposed milestones](#proposed-milestones)
@@ -28,6 +29,35 @@ AI-powered agents and developer templates for discovering, monitoring, and actin
 DomainFi turns domains into programmable onchain assets. Domain markets are information-heavy: users need discovery, filtering, valuation signals, portfolio monitoring, expiry tracking, marketplace alerts, and developer-friendly integration examples.
 
 DomainFi Agent Toolkit is designed as an agent layer around Doma Protocol: a practical set of bots, scripts, and templates that help users and developers turn raw domain data into useful workflows.
+
+## Quickstart
+
+The repository ships a small Python prototype (no external dependencies, Python 3.10+). It uses a mock inventory so the pipeline can be exercised without Doma SDK/API access.
+
+```bash
+# 1. Show the version
+PYTHONPATH=src python3 -m domainfi_toolkit version
+
+# 2. Scan the bundled mock inventory against an example watchlist
+PYTHONPATH=src python3 -m domainfi_toolkit scan \
+    --watchlist examples/watchlists/brandable-ai.json
+
+# 3. Same scan, machine-readable output
+PYTHONPATH=src python3 -m domainfi_toolkit scan \
+    --watchlist examples/watchlists/brandable-ai.json --json --limit 5
+
+# 4. Run the test suite (uses only the standard library)
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+```
+
+Or install it as a console script:
+
+```bash
+pip install -e .
+domainfi-agent scan --watchlist examples/watchlists/brandable-ai.json
+```
+
+The scoring pipeline is intentionally transparent: every signal carries an explanation, and the score is bounded to 0..100. See [`src/domainfi_toolkit/scoring.py`](src/domainfi_toolkit/scoring.py).
 
 ## Initial workflows
 
@@ -97,9 +127,9 @@ The first prototype is expected to use:
 
 ## Local development
 
-The repository today is a static landing page plus Markdown documentation. There are no runtime dependencies and no build step.
+The repository now contains both a static landing page and a small Python package. Both are dependency-free.
 
-Preview the site locally:
+### Static site
 
 ```bash
 # Option A: open the file directly
@@ -111,7 +141,22 @@ python3 -m http.server 8080
 # then visit http://localhost:8080/
 ```
 
-Run the repository validator (the same check CI runs):
+### Python prototype
+
+```bash
+# Run the unit tests (standard library only, no install required)
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+
+# Run the CLI without installing
+PYTHONPATH=src python3 -m domainfi_toolkit scan \
+    --watchlist examples/watchlists/brandable-ai.json
+
+# Or install in editable mode and use the console script
+pip install -e .
+domainfi-agent scan --watchlist examples/watchlists/brandable-ai.json
+```
+
+### Repository validator
 
 ```bash
 python3 scripts/validate_repo.py
