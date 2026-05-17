@@ -34,13 +34,36 @@ class CliTests(unittest.TestCase):
             stdout=out,
         )
         self.assertEqual(rc, 0)
-        payload = json.loads(out.getvalue())
+        raw = out.getvalue()
+        payload = json.loads(raw)
+
+        # Top-level shape.
         self.assertIn("opportunities", payload)
+        self.assertIn("count", payload)
+        self.assertIn("version", payload)
+        self.assertIn("watchlists", payload)
+        self.assertEqual(payload["count"], len(payload["opportunities"]))
         self.assertLessEqual(len(payload["opportunities"]), 3)
-        if payload["opportunities"]:
-            opp = payload["opportunities"][0]
+
+        # Per-opportunity schema and full roundtrip stability: dumping the
+        # parsed payload should yield exactly the same JSON string back.
+        self.assertEqual(json.loads(json.dumps(payload)), payload)
+
+        for opp in payload["opportunities"]:
+            self.assertIn("domain", opp)
             self.assertIn("score", opp)
-            self.assertIn("signals", opp["score"])
+            score = opp["score"]
+            self.assertIsInstance(score["score"], int)
+            self.assertGreaterEqual(score["score"], 0)
+            self.assertLessEqual(score["score"], 100)
+            self.assertIsInstance(score["signals"], list)
+            for signal in score["signals"]:
+                self.assertIn("name", signal)
+                self.assertIn("contribution", signal)
+                self.assertIn("explanation", signal)
+                self.assertIsInstance(signal["contribution"], int)
+                self.assertIsInstance(signal["explanation"], str)
+                self.assertTrue(signal["explanation"])
 
     def test_scan_missing_watchlist_returns_error(self) -> None:
         out = io.StringIO()
