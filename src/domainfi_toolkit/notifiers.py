@@ -15,11 +15,11 @@ import urllib.error
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Iterable, Protocol, TextIO
+from typing import Iterable, Protocol, TextIO, Union
 
 from .models import Alert, Opportunity
 
-NotificationItem = Alert | Opportunity
+NotificationItem = Union[Alert, Opportunity]
 
 
 class Notifier(Protocol):
