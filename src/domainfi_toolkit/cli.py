@@ -137,20 +137,15 @@ def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
         print("error: no watchlists loaded", file=sys.stderr)
         return 2
 
-    if args.limit < 1:
-        print("error: --limit must be >= 1", file=sys.stderr)
-        return 2
-    if args.min_score is not None and not 0 <= args.min_score <= 100:
-        print("error: --min-score must be in 0..100", file=sys.stderr)
-        return 2
+    # Always start from defaults so repeated CLI calls in one process cannot
+    # accidentally inherit custom weights from a prior run.
+    reset_weights()
     if args.weights:
         try:
             load_weights(args.weights)
         except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
             print(f"error: failed to load weights: {exc}", file=sys.stderr)
             return 2
-    else:
-        reset_weights()
 
     if args.inventory:
         try:

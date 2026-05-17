@@ -170,6 +170,39 @@ class CliTests(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertIn("failed to load weights", err.getvalue())
 
+    def test_scan_resets_weights_between_calls(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            weights = Path(tmp) / "weights.json"
+            # Shift weight heavily to expiry while preserving sum=100.
+            weights.write_text(
+                json.dumps(
+                    {
+                        "brandability": 15,
+                        "keyword": 30,
+                        "category": 15,
+                        "tld": 10,
+                        "price": 10,
+                        "expiry": 20,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            out_custom = io.StringIO()
+            rc_custom = main(
+                ["scan", "--watchlist", str(EXAMPLE_WATCHLIST), "--weights", str(weights), "--json"],
+                stdout=out_custom,
+            )
+            self.assertEqual(rc_custom, 0)
+
+            out_default = io.StringIO()
+            rc_default = main(["scan", "--watchlist", str(EXAMPLE_WATCHLIST), "--json"], stdout=out_default)
+            self.assertEqual(rc_default, 0)
+
+        payload_custom = json.loads(out_custom.getvalue())
+        payload_default = json.loads(out_default.getvalue())
+        self.assertNotEqual(payload_custom["opportunities"][0]["score"]["score"], payload_default["opportunities"][0]["score"]["score"])
+
     def test_scan_output_write_error_is_clean(self) -> None:
         out = io.StringIO()
         err = io.StringIO()
