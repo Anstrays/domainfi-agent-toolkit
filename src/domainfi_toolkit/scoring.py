@@ -17,12 +17,29 @@ from .models import Domain, Listing, ScoreResult, Signal, Watchlist
 
 
 # Weights are kept as named constants so they are easy to audit.
+# Each ``_*_MAX`` is the maximum positive contribution that signal can add to
+# the raw score. The weights are designed to sum to ``_TOTAL_MAX`` so a
+# perfect match in every dimension lands exactly at 100.
 _BRANDABILITY_MAX = 25
 _KEYWORD_MAX = 30
 _CATEGORY_MAX = 15
 _TLD_MAX = 10
 _PRICE_MAX = 15
 _EXPIRY_MAX = 5
+_TOTAL_MAX = 100
+
+# Fail loudly at import time if a future edit breaks the 0..100 invariant.
+_WEIGHTS_SUM = (
+    _BRANDABILITY_MAX
+    + _KEYWORD_MAX
+    + _CATEGORY_MAX
+    + _TLD_MAX
+    + _PRICE_MAX
+    + _EXPIRY_MAX
+)
+assert _WEIGHTS_SUM == _TOTAL_MAX, (
+    f"scoring weights must sum to {_TOTAL_MAX}, got {_WEIGHTS_SUM}"
+)
 
 
 def score_domain(
@@ -42,7 +59,7 @@ def score_domain(
     signals.append(_expiry_signal(domain, today=today))
 
     raw = sum(signal.contribution for signal in signals)
-    score = max(0, min(100, raw))
+    score = max(0, min(_TOTAL_MAX, raw))
     return ScoreResult(domain=domain.name, score=score, signals=tuple(signals))
 
 
