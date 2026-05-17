@@ -65,6 +65,17 @@ class CliTests(unittest.TestCase):
                 self.assertIsInstance(signal["explanation"], str)
                 self.assertTrue(signal["explanation"])
 
+    def test_scan_rejects_non_positive_limit(self) -> None:
+        out = io.StringIO()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(
+                ["scan", "--watchlist", str(EXAMPLE_WATCHLIST), "--limit", "0"],
+                stdout=out,
+            )
+        self.assertEqual(rc, 2)
+        self.assertIn("--limit must be >= 1", err.getvalue())
+
     def test_scan_missing_watchlist_returns_error(self) -> None:
         out = io.StringIO()
         err = io.StringIO()

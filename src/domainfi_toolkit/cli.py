@@ -92,6 +92,10 @@ def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
         print("error: no watchlists loaded", file=sys.stderr)
         return 2
 
+    if args.limit < 1:
+        print("error: --limit must be >= 1", file=sys.stderr)
+        return 2
+
     if args.inventory:
         try:
             provider = MockDomainProvider.from_json_file(args.inventory)
