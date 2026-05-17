@@ -1,4 +1,4 @@
-name: Validate static site
+name: Validate repository
 
 on:
   push:
@@ -15,9 +15,13 @@ concurrency:
 
 jobs:
   validate:
-    name: Validate repository
+    name: Validate repository / Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
@@ -25,10 +29,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Validate repository files
         run: python scripts/validate_repo.py
+
+      - name: Compile Python modules
+        run: python -m compileall -q src tests
 
       - name: Run unit tests
         env:
@@ -42,5 +49,10 @@ jobs:
           python -m domainfi_toolkit version
           python -m domainfi_toolkit scan \
             --watchlist examples/watchlists/brandable-ai.json \
-            --json --limit 3 > /tmp/scan.json
-          python -c "import json; data = json.load(open('/tmp/scan.json')); assert 'opportunities' in data, data"
+            --json --limit 3 --sort-by score > /tmp/scan.json
+          python -c "import json; data = json.load(open('/tmp/scan.json')); assert data['count'] <= 3 and 'opportunities' in data, data"
+          python -m domainfi_toolkit scan \
+            --watchlist examples/watchlists/brandable-ai.json \
+            --limit 2 --sort-by price --explain --no-color \
+            --output /tmp/scan-output.json
+          python -c "import json; data = json.load(open('/tmp/scan-output.json')); assert data['count'] <= 2 and 'opportunities' in data, data"

@@ -65,6 +65,23 @@ class DiscoveryAgentTests(unittest.TestCase):
             self.assertEqual(alert.severity, "watchlist")
             self.assertTrue(alert.title)
 
+    def test_scan_once_returns_metadata(self) -> None:
+        wl = Watchlist.from_dict({"name": "open", "keywords": ["ai"]})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+        result = agent.scan_once([wl], limit=2)
+        self.assertEqual(result.watchlists, ("open",))
+        self.assertLessEqual(len(result.opportunities), 2)
+        self.assertGreater(result.candidates_total, 0)
+        payload = result.to_dict()
+        self.assertIn("hit_rate", payload)
+        self.assertIn("opportunities", payload)
+
+    def test_run_loop_can_be_bounded_for_jobs(self) -> None:
+        wl = Watchlist.from_dict({"name": "open"})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+        results = list(agent.run_loop([wl], interval_seconds=0.001, iterations=2, notify=False))
+        self.assertEqual(len(results), 2)
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()

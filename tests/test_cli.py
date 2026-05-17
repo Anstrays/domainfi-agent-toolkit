@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -86,6 +87,116 @@ class CliTests(unittest.TestCase):
             )
         self.assertEqual(rc, 2)
         self.assertIn("error:", err.getvalue())
+
+    def test_scan_sort_by_price_and_explain(self) -> None:
+        out = io.StringIO()
+        rc = main(
+            [
+                "scan",
+                "--watchlist",
+                str(EXAMPLE_WATCHLIST),
+                "--limit",
+                "2",
+                "--sort-by",
+                "price",
+                "--explain",
+                "--no-color",
+            ],
+            stdout=out,
+        )
+        self.assertEqual(rc, 0)
+        text = out.getvalue()
+        self.assertIn("explain:", text)
+        self.assertIn("Found 2 domain opportunities", text)
+
+    def test_scan_min_score_override_and_output_file(self) -> None:
+        out = io.StringIO()
+        output_path = REPO_ROOT / ".tmp-scan-output.json"
+        try:
+            rc = main(
+                [
+                    "scan",
+                    "--watchlist",
+                    str(EXAMPLE_WATCHLIST),
+                    "--min-score",
+                    "90",
+                    "--output",
+                    str(output_path),
+                    "--json",
+                ],
+                stdout=out,
+            )
+            self.assertEqual(rc, 0)
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertEqual(payload, json.loads(out.getvalue()))
+            for opp in payload["opportunities"]:
+                self.assertGreaterEqual(opp["score"]["score"], 90)
+        finally:
+            output_path.unlink(missing_ok=True)
+
+    def test_scan_min_score_override_can_lower_watchlist_threshold(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            watchlist = Path(tmp) / "watchlist.json"
+            watchlist.write_text(
+                json.dumps({"name": "strict", "keywords": ["ai"], "min_score": 90}),
+                encoding="utf-8",
+            )
+            out = io.StringIO()
+            rc = main(["scan", "--watchlist", str(watchlist), "--min-score", "0", "--json"], stdout=out)
+        self.assertEqual(rc, 0)
+        payload = json.loads(out.getvalue())
+        self.assertGreater(payload["count"], 0)
+
+    def test_scan_rejects_malformed_weights_cleanly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            weights = Path(tmp) / "weights.json"
+            weights.write_text(
+                json.dumps(
+                    {
+                        "brandability": None,
+                        "keyword": 30,
+                        "category": 15,
+                        "tld": 10,
+                        "price": 15,
+                        "expiry": 30,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            out = io.StringIO()
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                rc = main(["scan", "--watchlist", str(EXAMPLE_WATCHLIST), "--weights", str(weights)], stdout=out)
+        self.assertEqual(rc, 2)
+        self.assertIn("failed to load weights", err.getvalue())
+
+    def test_scan_output_write_error_is_clean(self) -> None:
+        out = io.StringIO()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(
+                [
+                    "scan",
+                    "--watchlist",
+                    str(EXAMPLE_WATCHLIST),
+                    "--output",
+                    str(REPO_ROOT / "no-such-dir" / "scan.json"),
+                ],
+                stdout=out,
+            )
+        self.assertEqual(rc, 2)
+        self.assertIn("failed to write output", err.getvalue())
+
+    def test_scan_rejects_invalid_min_score(self) -> None:
+        out = io.StringIO()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(
+                ["scan", "--watchlist", str(EXAMPLE_WATCHLIST), "--min-score", "101"],
+                stdout=out,
+            )
+        self.assertEqual(rc, 2)
+        self.assertIn("--min-score must be in 0..100", err.getvalue())
 
 
 if __name__ == "__main__":  # pragma: no cover

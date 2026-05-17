@@ -12,6 +12,8 @@ score against a user-defined ``Watchlist``. The number is bounded to
 from __future__ import annotations
 
 from datetime import date
+import json
+from pathlib import Path
 
 from .models import Domain, Listing, ScoreResult, Signal, Watchlist
 
@@ -27,6 +29,15 @@ _TLD_MAX = 10
 _PRICE_MAX = 15
 _EXPIRY_MAX = 5
 _TOTAL_MAX = 100
+_DEFAULT_WEIGHTS = {
+    "brandability": _BRANDABILITY_MAX,
+    "keyword": _KEYWORD_MAX,
+    "category": _CATEGORY_MAX,
+    "tld": _TLD_MAX,
+    "price": _PRICE_MAX,
+    "expiry": _EXPIRY_MAX,
+}
+_active_weights = dict(_DEFAULT_WEIGHTS)
 
 # Fail loudly at import time if a future edit breaks the 0..100 invariant.
 _WEIGHTS_SUM = (
@@ -40,6 +51,61 @@ _WEIGHTS_SUM = (
 assert _WEIGHTS_SUM == _TOTAL_MAX, (
     f"scoring weights must sum to {_TOTAL_MAX}, got {_WEIGHTS_SUM}"
 )
+assert sum(_DEFAULT_WEIGHTS.values()) == _TOTAL_MAX
+
+
+def _weight(name: str) -> int:
+    return _active_weights[name]
+
+
+def _coerce_weight(name: str, value: object) -> int:
+    if isinstance(value, bool):
+        raise ValueError(f"weight {name!r} must be an integer")
+    try:
+        return int(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"weight {name!r} must be an integer") from exc
+
+
+def reset_weights() -> None:
+    """Restore default scoring weights."""
+
+    _active_weights.clear()
+    _active_weights.update(_DEFAULT_WEIGHTS)
+
+
+def load_weights(path: str | Path) -> None:
+    """Load runtime scoring weights from JSON.
+
+    The JSON object must provide all signal names and the weights must sum to
+    100. This keeps custom scoring explainable while preserving the invariant
+    expected by tests and CLI users.
+    """
+
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("weights file must contain a JSON object")
+    missing = set(_DEFAULT_WEIGHTS) - set(payload)
+    extra = set(payload) - set(_DEFAULT_WEIGHTS)
+    if missing or extra:
+        raise ValueError(f"weights keys mismatch; missing={sorted(missing)} extra={sorted(extra)}")
+    weights = {name: _coerce_weight(name, value) for name, value in payload.items()}
+    if any(value < 0 for value in weights.values()):
+        raise ValueError("weights must be non-negative")
+    if sum(weights.values()) != _TOTAL_MAX:
+        raise ValueError(f"weights must sum to {_TOTAL_MAX}, got {sum(weights.values())}")
+    _active_weights.clear()
+    _active_weights.update(weights)
+
+
+def explain(result: ScoreResult) -> str:
+    """Return a compact human-readable score breakdown."""
+
+    parts = [f"{result.domain}: {result.score}/100"]
+    for signal in result.signals:
+        if signal.contribution:
+            parts.append(f"{signal.name} +{signal.contribution}: {signal.explanation}")
+    return " | ".join(parts)
 
 
 def score_domain(
@@ -69,16 +135,16 @@ def _brandability_signal(domain: Domain) -> Signal:
     has_separator = "-" in sld or any(ch.isdigit() for ch in sld)
 
     if length <= 5:
-        contribution = _BRANDABILITY_MAX
+        contribution = _weight("brandability")
         explanation = "very short SLD (<=5 chars), highly brandable"
     elif length <= 8:
-        contribution = int(_BRANDABILITY_MAX * 0.8)
+        contribution = int(_weight("brandability") * 0.8)
         explanation = "short SLD (6-8 chars), brandable"
     elif length <= 12:
-        contribution = int(_BRANDABILITY_MAX * 0.5)
+        contribution = int(_weight("brandability") * 0.5)
         explanation = "moderate SLD length (9-12 chars)"
     else:
-        contribution = int(_BRANDABILITY_MAX * 0.2)
+        contribution = int(_weight("brandability") * 0.2)
         explanation = "long SLD (>12 chars), less brandable"
 
     if has_separator:
@@ -115,10 +181,10 @@ def _keyword_signal(domain: Domain, watchlist: Watchlist) -> Signal:
     # Reward exact-match (sld == keyword) more than substring match.
     exact = any(sld == kw for kw in matched)
     if exact:
-        contribution = _KEYWORD_MAX
+        contribution = _weight("keyword")
         explanation = f"exact keyword match: {matched!r}"
     else:
-        contribution = int(_KEYWORD_MAX * 0.6)
+        contribution = int(_weight("keyword") * 0.6)
         explanation = f"substring keyword match: {matched!r}"
 
     return Signal(name="keyword", value=matched, contribution=contribution, explanation=explanation)
@@ -136,7 +202,7 @@ def _category_signal(domain: Domain, watchlist: Watchlist) -> Signal:
         return Signal(
             name="category",
             value=domain.category,
-            contribution=_CATEGORY_MAX,
+            contribution=_weight("category"),
             explanation=f"category {domain.category!r} matches watchlist",
         )
     return Signal(
@@ -159,7 +225,7 @@ def _tld_signal(domain: Domain, watchlist: Watchlist) -> Signal:
         return Signal(
             name="tld",
             value=domain.tld,
-            contribution=_TLD_MAX,
+            contribution=_weight("tld"),
             explanation=f"TLD .{domain.tld} matches watchlist",
         )
     return Signal(
@@ -182,7 +248,7 @@ def _price_signal(listing: Listing | None, watchlist: Watchlist) -> Signal:
         return Signal(
             name="price",
             value=listing.price_usd,
-            contribution=int(_PRICE_MAX * 0.4),
+            contribution=int(_weight("price") * 0.4),
             explanation="listing exists; no max_price filter configured",
         )
     if listing.price_usd > watchlist.max_price_usd:
@@ -197,7 +263,7 @@ def _price_signal(listing: Listing | None, watchlist: Watchlist) -> Signal:
         )
     # Linear reward: cheaper relative to the cap = higher contribution.
     ratio = listing.price_usd / watchlist.max_price_usd if watchlist.max_price_usd else 1.0
-    contribution = int(round(_PRICE_MAX * (1 - min(1.0, ratio))))
+    contribution = int(round(_weight("price") * (1 - min(1.0, ratio))))
     contribution = max(1, contribution)  # never zero out a within-budget listing
     return Signal(
         name="price",
@@ -230,14 +296,14 @@ def _expiry_signal(domain: Domain, today: date | None = None) -> Signal:
         return Signal(
             name="expiry",
             value=days,
-            contribution=_EXPIRY_MAX,
+            contribution=_weight("expiry"),
             explanation=f"expires soon (in {days} day(s))",
         )
     if days <= 180:
         return Signal(
             name="expiry",
             value=days,
-            contribution=int(_EXPIRY_MAX * 0.6),
+            contribution=int(_weight("expiry") * 0.6),
             explanation=f"expires within 6 months (in {days} day(s))",
         )
     return Signal(
