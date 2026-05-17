@@ -1,0 +1,14 @@
+[
+  {
+    "name": "defi-cheap",
+    "keywords": ["yield", "swap", "lab"],
+    "categories": ["defi"],
+    "max_price_usd": 5000
+  },
+  {
+    "name": "defi-premium",
+    "categories": ["defi"],
+    "max_price_usd": 25000,
+    "min_score": 40
+  }
+]

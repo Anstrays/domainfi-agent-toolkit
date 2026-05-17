@@ -29,3 +29,18 @@ jobs:
 
       - name: Validate repository files
         run: python scripts/validate_repo.py
+
+      - name: Run unit tests
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+
+      - name: Smoke-test the CLI
+        env:
+          PYTHONPATH: src
+        run: |
+          python -m domainfi_toolkit version
+          python -m domainfi_toolkit scan \
+            --watchlist examples/watchlists/brandable-ai.json \
+            --json --limit 3 > /tmp/scan.json
+          python -c "import json; data = json.load(open('/tmp/scan.json')); assert 'opportunities' in data, data"

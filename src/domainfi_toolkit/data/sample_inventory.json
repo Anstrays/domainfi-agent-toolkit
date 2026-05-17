@@ -1,0 +1,81 @@
+{
+  "_comment": "Synthetic inventory used by MockDomainProvider. Not real Doma data.",
+  "domains": [
+    {
+      "name": "agentdesk.example",
+      "category": "ai-tools",
+      "tokenized": true,
+      "owner": "0xMockOwner1",
+      "expires_at": "2026-09-01"
+    },
+    {
+      "name": "swapfox.example",
+      "category": "defi",
+      "tokenized": true,
+      "owner": "0xMockOwner2",
+      "expires_at": "2026-06-15"
+    },
+    {
+      "name": "longish-domain-name.example",
+      "category": "generic",
+      "tokenized": true,
+      "expires_at": "2027-01-30"
+    },
+    {
+      "name": "yieldlab.example",
+      "category": "defi",
+      "tokenized": true,
+      "expires_at": "2026-05-25"
+    },
+    {
+      "name": "domainfi.example",
+      "category": "domainfi",
+      "tokenized": true,
+      "expires_at": "2028-02-10"
+    },
+    {
+      "name": "boringnotforsale.example",
+      "category": "generic",
+      "tokenized": true,
+      "owner": "0xMockOwner3",
+      "expires_at": "2030-12-31"
+    }
+  ],
+  "listings": [
+    {
+      "domain": "agentdesk.example",
+      "price_usd": 1800,
+      "marketplace": "mock-market",
+      "listed_at": "2026-05-01T12:00:00Z",
+      "status": "active"
+    },
+    {
+      "domain": "swapfox.example",
+      "price_usd": 4200,
+      "marketplace": "mock-market",
+      "listed_at": "2026-04-22T09:30:00Z",
+      "status": "active"
+    },
+    {
+      "domain": "longish-domain-name.example",
+      "price_usd": 250,
+      "marketplace": "mock-market",
+      "listed_at": "2026-03-12T08:00:00Z",
+      "status": "active"
+    },
+    {
+      "domain": "yieldlab.example",
+      "price_usd": 9500,
+      "marketplace": "mock-market",
+      "listed_at": "2026-05-10T16:45:00Z",
+      "status": "active"
+    },
+    {
+      "domain": "domainfi.example",
+      "price_usd": 25000,
+      "marketplace": "mock-market",
+      "listed_at": "2026-05-12T18:00:00Z",
+      "status": "active"
+    }
+  ]
+}

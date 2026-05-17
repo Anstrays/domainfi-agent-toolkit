@@ -17,11 +17,11 @@
 
 ## Phase 2 — Discovery prototype
 
-- [ ] Implement Doma data adapter stub
-- [ ] Add domain filtering and watchlist configuration
-- [ ] Build transparent scoring pipeline
-- [ ] Output ranked results with explanations
-- [ ] Add CLI demo
+- [x] Implement Doma data adapter stub (`MockDomainProvider`)
+- [x] Add domain filtering and watchlist configuration
+- [x] Build transparent scoring pipeline
+- [x] Output ranked results with explanations
+- [x] Add CLI demo (`python -m domainfi_toolkit scan ...`)
 
 ## Phase 3 — Alerts and portfolio monitoring
 

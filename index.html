@@ -24,29 +24,72 @@
   <meta name="twitter:description" content="AI-powered agents and developer templates for Doma Protocol DomainFi workflows." />
   <style>
     :root {
-      --bg: #080b12;
-      --surface: #0f1420;
-      --surface-2: #151c2b;
-      --ink: #f4f7fb;
-      --muted: #9ca8ba;
-      --line: rgba(255,255,255,.11);
+      --bg: #060911;
+      --surface: #0c1018;
+      --surface-2: #121824;
+      --ink: #f0f4fa;
+      --muted: #8b9ab3;
+      --line: rgba(255,255,255,.08);
       --accent: #7cf7c9;
       --accent-2: #78a8ff;
+      --accent-3: #c084fc;
       --warning: #ffd166;
-      --shadow: 0 24px 80px rgba(0,0,0,.35);
+      --shadow: 0 32px 100px rgba(0,0,0,.5);
       --radius: 24px;
+      --transition: .3s cubic-bezier(.4,0,.2,1);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background:
-        radial-gradient(circle at 20% 0%, rgba(124,247,201,.16), transparent 28rem),
-        radial-gradient(circle at 88% 18%, rgba(120,168,255,.18), transparent 30rem),
-        linear-gradient(180deg, #080b12 0%, #0b0f18 48%, #070910 100%);
+      background: var(--bg);
       color: var(--ink);
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background-image:
+        linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 70%);
+    }
+
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 600px 500px at 15% 0%, rgba(124,247,201,.14), transparent),
+        radial-gradient(ellipse 500px 600px at 85% 10%, rgba(120,168,255,.12), transparent),
+        radial-gradient(ellipse 400px 400px at 50% 60%, rgba(192,132,252,.06), transparent);
+      animation: glowPulse 12s ease-in-out infinite alternate;
+    }
+
+    @keyframes glowPulse {
+      0% { opacity: .8; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes terminalType {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     a { color: inherit; text-decoration: none; }
@@ -57,7 +100,7 @@
       outline-offset: 3px;
       border-radius: 6px;
     }
-    .wrap { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
 
     .skip-link {
       position: absolute;
@@ -68,15 +111,23 @@
       padding: 10px 14px;
       border-radius: 8px;
       font-weight: 800;
-      z-index: 10;
+      z-index: 100;
     }
     .skip-link:focus { left: 12px; top: 12px; }
 
     header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 28px 0;
+      padding: 18px 0;
+      backdrop-filter: blur(16px) saturate(1.6);
+      -webkit-backdrop-filter: blur(16px) saturate(1.6);
+      border-bottom: 1px solid var(--line);
+      background: rgba(6,9,17,.7);
+      animation: fadeInUp .6s ease both;
     }
 
     .brand {
@@ -88,76 +139,86 @@
     }
 
     .mark {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 12px;
       background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      box-shadow: 0 0 0 1px rgba(255,255,255,.22) inset, 0 10px 30px rgba(124,247,201,.18);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.22) inset, 0 8px 32px rgba(124,247,201,.2), 0 0 0 4px rgba(124,247,201,.06);
       display: grid;
       place-items: center;
       color: #07100d;
       font-weight: 900;
+      transition: transform var(--transition), box-shadow var(--transition);
     }
+    .brand:hover .mark { transform: scale(1.08) rotate(-3deg); box-shadow: 0 0 0 1px rgba(255,255,255,.3) inset, 0 8px 40px rgba(124,247,201,.3), 0 0 0 6px rgba(124,247,201,.1); }
 
-    nav { display: flex; gap: 18px; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
-    nav a:hover { color: var(--ink); }
+    nav { display: flex; gap: 8px; align-items: center; color: var(--muted); font-size: 14px; flex-wrap: wrap; }
+    nav a { padding: 8px 12px; border-radius: 10px; transition: color var(--transition), background var(--transition); }
+    nav a:hover { color: var(--ink); background: rgba(255,255,255,.06); }
     .repo-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border: 1px solid var(--line);
       border-radius: 999px;
       color: var(--ink);
       font-size: 13px;
       font-weight: 700;
+      transition: all var(--transition);
     }
-    .repo-link:hover { background: rgba(255,255,255,.06); }
+    .repo-link:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); transform: translateY(-1px); }
     .repo-link svg { width: 16px; height: 16px; fill: currentColor; }
 
     .hero {
-      padding: 80px 0 64px;
+      padding: 100px 0 80px;
       display: grid;
       grid-template-columns: 1.1fr .9fr;
-      gap: 48px;
+      gap: 56px;
       align-items: center;
+      animation: fadeInUp .8s ease both;
     }
 
     .eyebrow {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.04);
+      padding: 8px 14px;
+      border: 1px solid rgba(124,247,201,.2);
+      background: rgba(124,247,201,.05);
       border-radius: 999px;
       color: var(--accent);
       font-size: 13px;
       font-weight: 700;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
+      backdrop-filter: blur(8px);
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(48px, 7vw, 88px);
-      line-height: .92;
+      font-size: clamp(48px, 7vw, 92px);
+      line-height: .9;
       letter-spacing: -.075em;
       text-wrap: balance;
+      background: linear-gradient(135deg, var(--ink) 0%, #c9d2df 50%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .lead {
-      margin: 26px 0 0;
-      color: #c9d2df;
-      font-size: clamp(18px, 2vw, 22px);
-      line-height: 1.55;
-      max-width: 690px;
+      margin: 28px 0 0;
+      color: var(--muted);
+      font-size: clamp(17px, 2vw, 21px);
+      line-height: 1.6;
+      max-width: 640px;
       text-wrap: pretty;
     }
 
-    .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 38px; }
     .btn {
-      min-height: 48px;
-      padding: 0 18px;
+      min-height: 50px;
+      padding: 0 22px;
       border-radius: 14px;
       border: 1px solid var(--line);
       display: inline-flex;
@@ -165,112 +226,170 @@
       justify-content: center;
       font-weight: 800;
       font-size: 14px;
-    }
-    .btn.primary { background: var(--accent); color: #07100d; border-color: transparent; }
-    .btn.secondary { background: rgba(255,255,255,.05); color: var(--ink); }
-
-    .terminal-card {
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
+      transition: all var(--transition);
+      position: relative;
       overflow: hidden;
     }
+    .btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.1), transparent);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .btn:hover::before { opacity: 1; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn.primary { background: linear-gradient(135deg, var(--accent), #5ce0b0); color: #07100d; border-color: transparent; box-shadow: 0 8px 32px rgba(124,247,201,.2), 0 0 0 1px rgba(124,247,201,.3) inset; }
+    .btn.primary:hover { box-shadow: 0 12px 44px rgba(124,247,201,.35), 0 0 0 1px rgba(124,247,201,.5) inset; }
+    .btn.secondary { background: rgba(255,255,255,.04); color: var(--ink); border-color: var(--line); }
+    .btn.secondary:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); }
+
+    .terminal-card {
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow), 0 0 80px rgba(120,168,255,.08);
+      overflow: hidden;
+      transition: transform var(--transition), box-shadow var(--transition);
+      animation: fadeInUp 1s ease .2s both;
+    }
+    .terminal-card:hover { transform: translateY(-4px) scale(1.01); box-shadow: var(--shadow), 0 0 120px rgba(120,168,255,.12); }
     .terminal-top {
-      height: 44px;
+      height: 48px;
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 0 16px;
+      padding: 0 18px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255,255,255,.04);
+      background: rgba(255,255,255,.03);
     }
-    .dot { width: 10px; height: 10px; border-radius: 50%; background: #ff6b6b; }
-    .dot:nth-child(2) { background: #ffd166; }
-    .dot:nth-child(3) { background: #7cf7c9; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; background: #ff6b6b; box-shadow: 0 0 6px rgba(255,107,107,.4); }
+    .dot:nth-child(2) { background: #ffd166; box-shadow: 0 0 6px rgba(255,209,102,.4); }
+    .dot:nth-child(3) { background: #7cf7c9; box-shadow: 0 0 6px rgba(124,247,201,.4); }
     pre {
       margin: 0;
-      padding: 22px;
+      padding: 24px;
       color: #dce6f4;
       white-space: pre-wrap;
-      font-size: 14px;
-      line-height: 1.65;
-      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 13.5px;
+      line-height: 1.7;
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
     }
-    .comment { color: #7f8da3; }
+    .comment { color: #5a6a82; }
     .green { color: var(--accent); }
     .blue { color: var(--accent-2); }
     .yellow { color: var(--warning); }
 
-    section { padding: 58px 0; }
-    .section-head { max-width: 760px; margin-bottom: 28px; }
-    h2 { margin: 0; font-size: clamp(32px, 4vw, 52px); letter-spacing: -.055em; line-height: 1; }
-    .section-head p { color: var(--muted); font-size: 18px; line-height: 1.6; }
+    section { padding: 72px 0; }
+    .section-head { max-width: 760px; margin-bottom: 36px; }
+    h2 { margin: 0; font-size: clamp(32px, 4.5vw, 56px); letter-spacing: -.06em; line-height: .95; }
+    .section-head p { color: var(--muted); font-size: 17px; line-height: 1.65; margin-top: 14px; }
 
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
     .card {
-      padding: 24px;
+      padding: 28px;
       border: 1px solid var(--line);
-      background: rgba(255,255,255,.045);
+      background: rgba(255,255,255,.03);
       border-radius: 22px;
       min-height: 220px;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), var(--accent-2), transparent);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .card:hover::before { opacity: 1; }
+    .card:hover {
+      background: rgba(255,255,255,.055);
+      border-color: rgba(255,255,255,.15);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0,0,0,.3), 0 0 40px rgba(124,247,201,.04);
     }
     .card strong { display: block; font-size: 18px; margin-bottom: 12px; letter-spacing: -.02em; }
-    .card p { margin: 0; color: var(--muted); line-height: 1.55; }
-    .num { color: var(--accent); font-weight: 900; margin-bottom: 16px; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.6; font-size: 15px; }
+    .num {
+      color: var(--accent);
+      font-weight: 900;
+      margin-bottom: 16px;
+      font-size: 13px;
+      letter-spacing: .08em;
+      opacity: .8;
+    }
 
     .flow {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      gap: 14px;
     }
     .step {
       border: 1px solid var(--line);
       border-radius: 18px;
-      padding: 18px;
-      background: rgba(255,255,255,.035);
+      padding: 22px;
+      background: rgba(255,255,255,.025);
+      transition: all var(--transition);
+      position: relative;
     }
-    .step span { color: var(--accent-2); font-size: 13px; font-weight: 900; }
-    .step h3 { margin: 10px 0 8px; font-size: 17px; }
-    .step p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .step:hover { background: rgba(255,255,255,.05); border-color: rgba(120,168,255,.25); transform: translateY(-3px); }
+    .step span { color: var(--accent-2); font-size: 12px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; }
+    .step h3 { margin: 12px 0 8px; font-size: 17px; letter-spacing: -.02em; }
+    .step p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
 
     .cta {
-      margin: 64px 0 80px;
-      padding: 34px;
+      margin: 80px 0 100px;
+      padding: 40px;
       border-radius: 28px;
-      border: 1px solid rgba(124,247,201,.25);
-      background: linear-gradient(135deg, rgba(124,247,201,.12), rgba(120,168,255,.08));
+      border: 1px solid rgba(124,247,201,.2);
+      background: linear-gradient(135deg, rgba(124,247,201,.08), rgba(120,168,255,.05), rgba(192,132,252,.03));
       display: flex;
       justify-content: space-between;
-      gap: 24px;
+      gap: 28px;
       align-items: center;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 40px 100px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);
+      transition: all var(--transition);
     }
-    .cta p { color: #c9d2df; margin: 10px 0 0; line-height: 1.5; max-width: 700px; }
+    .cta:hover { border-color: rgba(124,247,201,.35); box-shadow: 0 40px 100px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.1), 0 0 60px rgba(124,247,201,.06); }
+    .cta p { color: var(--muted); margin: 12px 0 0; line-height: 1.55; max-width: 700px; }
 
-    footer { padding: 28px 0 44px; color: var(--muted); border-top: 1px solid var(--line); font-size: 14px; }
+    footer { padding: 32px 0 52px; color: var(--muted); border-top: 1px solid var(--line); font-size: 13px; }
     .footer-row { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; }
-    .footer-links { display: inline-flex; gap: 16px; flex-wrap: wrap; }
+    .footer-links { display: inline-flex; gap: 18px; flex-wrap: wrap; }
+    .footer-links a { transition: color var(--transition); }
     .footer-links a:hover { color: var(--ink); }
 
     @media (max-width: 860px) {
       nav { display: none; }
-      .hero { grid-template-columns: 1fr; padding-top: 40px; }
+      .hero { grid-template-columns: 1fr; padding-top: 48px; gap: 36px; }
       .grid, .flow { grid-template-columns: 1fr; }
-      .cta { flex-direction: column; align-items: flex-start; }
+      .cta { flex-direction: column; align-items: flex-start; padding: 28px; }
+      h1 { font-size: clamp(36px, 10vw, 56px); }
     }
   </style>
 </head>
 <body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
   <a class="skip-link" href="#top">Skip to content</a>
   <div class="wrap">
     <header>
+      <div class="wrap" style="display:flex;align-items:center;justify-content:space-between">
       <a class="brand" href="#top" aria-label="DomainFi Agent Toolkit home">
         <span class="mark">D</span>
         <span>DomainFi Agent Toolkit</span>
       </a>
       <nav aria-label="Primary navigation">
         <a href="#workflows">Workflows</a>
-        <a href="#integration">Doma Integration</a>
+        <a href="#integration">Integration</a>
         <a href="#milestones">Milestones</a>
         <a href="#docs">Docs</a>
         <a class="repo-link" href="https://github.com/Anstrays/domainfi-agent-toolkit" target="_blank" rel="noopener noreferrer" aria-label="DomainFi Agent Toolkit on GitHub">
@@ -278,6 +397,7 @@
           GitHub
         </a>
       </nav>
+      </div>
     </header>
 
     <main id="top">
@@ -294,18 +414,18 @@
 
         <div class="terminal-card" aria-label="Example agent output">
           <div class="terminal-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-          <pre><span class="comment">$ domainfi-agent scan --watchlist brandable-ai</span>
+          <pre><span class="comment">$ domainfi-agent scan --watchlist brandable-ai.json</span>
 
-<span class="green">Found 42 domain opportunities</span>
+<span class="green">Watchlists scanned: brandable-ai</span>
+<span class="green">Found 2 domain opportunities</span>
 
-<span class="blue">Top match</span>
-  domain: agentdesk.example
-  score: 91/100
-  reason: short, brandable, AI tooling category
+<span class="blue">#01</span> agentdesk.example  score=58/100  ($1800 on mock-market)
+   + keyword       18  substring keyword match: ['agent']
+   + category      15  category 'ai-tools' matches watchlist
+   + price         10  price $1800 within cap $5000
 
-<span class="yellow">Alert</span>
-  price changed on watched domain
-  send: Telegram + Discord</pre>
+<span class="yellow">[WATCHLIST]</span> agentdesk.example  score 58
+  reason: substring keyword match; category 'ai-tools'</pre>
         </div>
       </div>
 
@@ -427,7 +547,7 @@
     "url": "https://anstrays.github.io/domainfi-agent-toolkit/",
     "codeRepository": "https://github.com/Anstrays/domainfi-agent-toolkit",
     "license": "https://opensource.org/licenses/MIT",
-    "programmingLanguage": ["HTML", "CSS"],
+    "programmingLanguage": ["Python", "HTML", "CSS"],
     "applicationCategory": "DeveloperApplication"
   }
   </script>

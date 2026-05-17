@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "domainfi-agent-toolkit"
+version = "0.1.0"
+description = "AI agent prototype for tokenized domain markets on Doma Protocol."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "DomainFi Agent Toolkit contributors" }]
+keywords = ["domainfi", "doma", "agents", "domains", "web3"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = []
+
+[project.scripts]
+domainfi-agent = "domainfi_toolkit.cli:main"
+
+[project.urls]
+Homepage = "https://anstrays.github.io/domainfi-agent-toolkit/"
+Repository = "https://github.com/Anstrays/domainfi-agent-toolkit"
+Issues = "https://github.com/Anstrays/domainfi-agent-toolkit/issues"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"domainfi_toolkit" = ["data/*.json"]
