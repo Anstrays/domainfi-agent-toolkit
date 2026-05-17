@@ -61,14 +61,8 @@ class MockDomainProvider:
 
 
 def _domain_from_dict(item: dict) -> Domain:
-    name = str(item["name"]).strip().lower()
-    if "." not in name:
-        raise ValueError(f"invalid domain name: {item['name']!r}")
-    sld, _, tld = name.rpartition(".")
-    return Domain(
-        name=name,
-        sld=sld,
-        tld=tld,
+    return Domain.from_name(
+        item["name"],
         category=item.get("category"),
         tokenized=bool(item.get("tokenized", True)),
         owner=item.get("owner"),

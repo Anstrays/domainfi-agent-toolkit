@@ -14,7 +14,12 @@ from typing import Any, Iterable
 
 @dataclass(frozen=True)
 class Domain:
-    """A tokenized domain record returned by a provider."""
+    """A tokenized domain record returned by a provider.
+
+    Prefer :meth:`Domain.from_name` over the raw constructor: it derives
+    ``sld`` and ``tld`` from ``name`` and guarantees they are consistent
+    with each other.
+    """
 
     name: str
     tld: str
@@ -23,6 +28,38 @@ class Domain:
     tokenized: bool = True
     owner: str | None = None
     expires_at: str | None = None  # ISO 8601 date string
+
+    @classmethod
+    def from_name(
+        cls,
+        name: str,
+        *,
+        category: str | None = None,
+        tokenized: bool = True,
+        owner: str | None = None,
+        expires_at: str | None = None,
+    ) -> "Domain":
+        """Build a :class:`Domain` from a fully qualified name.
+
+        The ``sld`` and ``tld`` fields are derived from ``name`` so the
+        three can never drift apart.
+        """
+
+        cleaned = str(name).strip().lower()
+        if "." not in cleaned:
+            raise ValueError(f"invalid domain name: {name!r}")
+        sld, _, tld = cleaned.rpartition(".")
+        if not sld or not tld:
+            raise ValueError(f"invalid domain name: {name!r}")
+        return cls(
+            name=cleaned,
+            sld=sld,
+            tld=tld,
+            category=category,
+            tokenized=tokenized,
+            owner=owner,
+            expires_at=expires_at,
+        )
 
     def days_until_expiry(self, today: date | None = None) -> int | None:
         if not self.expires_at:
@@ -60,12 +97,20 @@ class Watchlist:
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "Watchlist":
         def _tuple(value: Any) -> tuple[str, ...]:
-            if not value:
+            if value is None or value == "" or value == [] or value == ():
                 return ()
+            # ``str`` is itself iterable; handle it explicitly so a single
+            # string keyword is not split into characters.
             if isinstance(value, str):
                 return (value.strip().lower(),)
+            if isinstance(value, (bytes, bytearray)):
+                raise TypeError("expected list or string, got bytes")
             if isinstance(value, Iterable):
-                return tuple(str(item).strip().lower() for item in value if str(item).strip())
+                return tuple(
+                    str(item).strip().lower()
+                    for item in value
+                    if str(item).strip()
+                )
             raise TypeError(f"expected list or string, got {type(value).__name__}")
 
         name = str(payload.get("name") or "").strip()
@@ -77,7 +122,9 @@ class Watchlist:
             try:
                 max_price = float(max_price)
             except (TypeError, ValueError) as exc:
-                raise ValueError(f"watchlist '{name}': max_price_usd must be a number") from exc
+                raise ValueError(
+                    f"watchlist '{name}': max_price_usd must be a number"
+                ) from exc
             if max_price < 0:
                 raise ValueError(f"watchlist '{name}': max_price_usd must be >= 0")
 
