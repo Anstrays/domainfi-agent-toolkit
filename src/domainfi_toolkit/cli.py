@@ -22,6 +22,7 @@ from typing import Sequence, TextIO
 
 from . import __version__
 from .agent import DiscoveryAgent
+from .arc import ARC_TESTNET, build_payment_required_response, estimate_unit_economics
 from .notifiers import ConsoleNotifier
 from .providers import MockDomainProvider
 from .scoring import explain as explain_score, load_weights, reset_weights
@@ -100,6 +101,44 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_scan.set_defaults(func=_cmd_scan)
 
+    p_arc = sub.add_parser("arc-mvp", help="Print Arc paid-agent MVP config and unit economics.")
+    p_arc.add_argument(
+        "--resource",
+        default="domainfi.discovery.scan",
+        help="Paid API resource name (default: domainfi.discovery.scan).",
+    )
+    p_arc.add_argument(
+        "--price-microusd",
+        type=int,
+        default=25_000,
+        help="Price per request in microUSD (default: 25000 = $0.025).",
+    )
+    p_arc.add_argument(
+        "--provider-cost-microusd",
+        type=int,
+        default=7_000,
+        help="Estimated provider/model cost per request in microUSD.",
+    )
+    p_arc.add_argument(
+        "--infra-cost-microusd",
+        type=int,
+        default=2_000,
+        help="Estimated infra cost per request in microUSD.",
+    )
+    p_arc.add_argument(
+        "--settlement-cost-microusd",
+        type=int,
+        default=1_000,
+        help="Estimated settlement/accounting cost per request in microUSD.",
+    )
+    p_arc.add_argument(
+        "--pay-to",
+        default="0x0000000000000000000000000000000000000000",
+        help="Demo seller address for the x402 challenge.",
+    )
+    p_arc.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    p_arc.set_defaults(func=_cmd_arc_mvp)
+
     return parser
 
 
@@ -112,6 +151,52 @@ def main(argv: Sequence[str] | None = None, stdout: TextIO | None = None) -> int
 
 def _cmd_version(_args: argparse.Namespace, out: TextIO) -> int:
     print(f"domainfi-agent {__version__}", file=out)
+    return 0
+
+
+def _cmd_arc_mvp(args: argparse.Namespace, out: TextIO) -> int:
+    try:
+        economics = estimate_unit_economics(
+            provider_cost_microusd=args.provider_cost_microusd,
+            infra_cost_microusd=args.infra_cost_microusd,
+            settlement_cost_microusd=args.settlement_cost_microusd,
+            price_microusd=args.price_microusd,
+        )
+        challenge = build_payment_required_response(
+            resource=args.resource,
+            amount_microusd=args.price_microusd,
+            pay_to=args.pay_to,
+        )
+    except (TypeError, ValueError) as exc:
+        print(f"error: invalid Arc MVP parameters: {exc}", file=sys.stderr)
+        return 2
+
+    payload = {
+        "version": __version__,
+        "arc": ARC_TESTNET.to_dict(),
+        "x402_challenge": challenge,
+        "unit_economics": economics.to_dict(),
+        "demand_thesis": [
+            "Domain intelligence is naturally pay-per-signal: users pay for filtered opportunities, not raw listings.",
+            "Arc makes costs legible because gas and API settlement can both be denominated in USDC.",
+            "x402/Gateway lets the project sell scans, alerts, and API calls before building a full SaaS subscription stack.",
+        ],
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2, sort_keys=True), file=out)
+        return 0
+
+    print("Arc MVP: paid DomainFi discovery agent", file=out)
+    print(f"Network: {ARC_TESTNET.name} chain_id={ARC_TESTNET.chain_id} gas={ARC_TESTNET.native_gas_token}", file=out)
+    print(f"RPC: {ARC_TESTNET.rpc_url}", file=out)
+    print(f"Resource: {args.resource}", file=out)
+    print(f"Price: {args.price_microusd} microUSD per request", file=out)
+    print(
+        "Gross margin: "
+        f"{economics.gross_margin_microusd} microUSD ({economics.gross_margin_percent}%)",
+        file=out,
+    )
+    print(f"Payment header demo: X-Payment: x402-test:{args.resource}:{args.price_microusd}", file=out)
     return 0
 
 

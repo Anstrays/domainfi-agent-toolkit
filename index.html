@@ -390,6 +390,7 @@
       <nav aria-label="Primary navigation">
         <a href="#workflows">Workflows</a>
         <a href="#integration">Integration</a>
+        <a href="#arc">Arc MVP</a>
         <a href="#milestones">Milestones</a>
         <a href="#docs">Docs</a>
         <a class="repo-link" href="https://github.com/Anstrays/domainfi-agent-toolkit" target="_blank" rel="noopener noreferrer" aria-label="DomainFi Agent Toolkit on GitHub">
@@ -408,6 +409,7 @@
           <p class="lead">DomainFi Agent Toolkit helps users and developers discover, monitor, and act on Doma-powered domain opportunities through practical bots, alerts, scoring workflows, and integration templates.</p>
           <div class="actions">
             <a class="btn primary" href="#workflows">View workflows</a>
+            <a class="btn secondary" href="#arc">Arc paid-agent MVP</a>
             <a class="btn secondary" href="https://doma.xyz/forge" target="_blank" rel="noopener noreferrer">Doma Forge</a>
           </div>
         </div>
@@ -465,6 +467,18 @@
         </div>
       </section>
 
+      <section id="arc">
+        <div class="section-head">
+          <h2>Arc MVP: paid domain intelligence in USDC.</h2>
+          <p>The Arc wedge is simple: sell DomainFi scans, watchlist alerts, and API calls as x402-style paid resources, priced in USDC and designed for agent-to-agent usage.</p>
+        </div>
+        <div class="grid">
+          <article class="card"><strong>USDC-native pricing</strong><p>Arc uses USDC as gas, so request price, gas, and settlement can share the same dollar mental model.</p></article>
+          <article class="card"><strong>x402 payment loop</strong><p>The local demo exposes HTTP 402 payment instructions, then returns ranked domain opportunities after an X-Payment retry.</p></article>
+          <article class="card"><strong>Unit economics</strong><p>The default scan price is 25,000 microUSD with visible provider, infra, settlement, and gross-margin assumptions.</p></article>
+        </div>
+      </section>
+
       <section id="milestones">
         <div class="section-head">
           <h2>Milestone-based build plan.</h2>
@@ -474,6 +488,7 @@
           <div class="step"><span>WEEK 1</span><h3>Architecture</h3><p>Map Doma docs, SDKs, APIs, data model, and agent workflow boundaries.</p></div>
           <div class="step"><span>WEEK 2–3</span><h3>Prototype</h3><p>Build discovery CLI or bot with filters, watchlists, ranked output, and explanations.</p></div>
           <div class="step"><span>WEEK 4</span><h3>Alerts</h3><p>Add Telegram/Discord notification examples and portfolio/watchlist monitoring flow.</p></div>
+          <div class="step"><span>ARC MVP</span><h3>Paid agent</h3><p>Ship an Arc Testnet runbook, x402-style paid scan endpoint, and USDC unit economics.</p></div>
           <div class="step"><span>WEEK 5–6</span><h3>Public demo</h3><p>Ship documentation, templates, and a write-up on agentic DomainFi workflows.</p></div>
         </div>
       </section>
@@ -493,6 +508,11 @@
             <strong>Roadmap</strong>
             <p>Phased delivery plan from research and prototype to alerts, templates, and hardening.</p>
             <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/docs/ROADMAP.md" target="_blank" rel="noopener noreferrer">Open ROADMAP.md</a></p>
+          </article>
+          <article class="card">
+            <strong>Arc MVP</strong>
+            <p>Arc Testnet constants, x402-style paid agent runbook, demand thesis, and USDC unit economics.</p>
+            <p style="margin-top:14px"><a class="btn secondary" href="https://github.com/Anstrays/domainfi-agent-toolkit/blob/main/docs/ARC_MVP.md" target="_blank" rel="noopener noreferrer">Open ARC_MVP.md</a></p>
           </article>
           <article class="card">
             <strong>Grant scope</strong>

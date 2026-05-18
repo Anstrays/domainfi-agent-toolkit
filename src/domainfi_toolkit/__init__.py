@@ -12,6 +12,17 @@ behind the same ``DomainProvider`` interface.
 """
 
 from .agent import DiscoveryAgent, ScanResult
+from .arc import (
+    ARC_TESTNET,
+    ArcNetworkConfig,
+    UnitEconomics,
+    X402Payment,
+    build_paid_discovery_payload,
+    build_payment_required_response,
+    estimate_unit_economics,
+    parse_x402_payment_header,
+    verify_x402_payment_header,
+)
 from .models import (
     Alert,
     Domain,
@@ -33,6 +44,16 @@ __all__ = [
     # Agent
     "DiscoveryAgent",
     "ScanResult",
+    # Arc paid-agent MVP
+    "ARC_TESTNET",
+    "ArcNetworkConfig",
+    "UnitEconomics",
+    "X402Payment",
+    "build_paid_discovery_payload",
+    "build_payment_required_response",
+    "estimate_unit_economics",
+    "parse_x402_payment_header",
+    "verify_x402_payment_header",
     # Models
     "Alert",
     "Domain",

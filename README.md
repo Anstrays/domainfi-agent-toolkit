@@ -7,7 +7,7 @@ AI-powered agents and developer templates for discovering, monitoring, and actin
 [![Status: proposal](https://img.shields.io/badge/status-proposal%20%26%20prototype-7cf7c9)](docs/ROADMAP.md)
 [![GitHub Pages](https://img.shields.io/badge/site-anstrays.github.io-78a8ff?logo=githubpages&logoColor=white)](https://anstrays.github.io/domainfi-agent-toolkit/)
 
-[Live project page](https://anstrays.github.io/domainfi-agent-toolkit/) · [Architecture](docs/ARCHITECTURE.md) · [Roadmap](docs/ROADMAP.md) · [Grant scope](docs/GRANT_SCOPE.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
+[Live project page](https://anstrays.github.io/domainfi-agent-toolkit/) · [Architecture](docs/ARCHITECTURE.md) · [Arc MVP](docs/ARC_MVP.md) · [Roadmap](docs/ROADMAP.md) · [Grant scope](docs/GRANT_SCOPE.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
 > Status: early Doma Forge grant proposal and prototype scope. The repository now ships a small dependency-free Python prototype of the discovery agent (mock data, transparent scoring, watchlists, CLI). Production Doma integrations will be added behind the same provider interface once SDK/API/testnet access is available.
 
@@ -17,6 +17,7 @@ AI-powered agents and developer templates for discovering, monitoring, and actin
 - [Quickstart](#quickstart)
 - [Initial workflows](#initial-workflows)
 - [Planned Doma integration](#planned-doma-integration)
+- [Arc paid-agent MVP](#arc-paid-agent-mvp)
 - [Proposed milestones](#proposed-milestones)
 - [Tech direction](#tech-direction)
 - [Local development](#local-development)
@@ -105,6 +106,28 @@ Potential modules:
 - scoring and filtering pipeline
 - notification adapters
 - agent prompts and workflow templates
+
+## Arc paid-agent MVP
+
+The repo now includes an Arc/Circle-native monetization wedge: a dependency-free paid discovery endpoint demo using an x402-style HTTP `402 Payment Required` flow.
+
+```bash
+# Print Arc Testnet config, x402 challenge payload, and unit economics
+PYTHONPATH=src python3 -m domainfi_toolkit arc-mvp --json
+
+# Run the local paid agent endpoint
+PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
+
+# Request without payment: returns 402 payment instructions
+python3 examples/arc-x402-paid-agent/client.py --url http://127.0.0.1:8765/scan
+
+# Request with the local demo payment proof: returns paid discovery JSON
+python3 examples/arc-x402-paid-agent/client.py \
+    --url http://127.0.0.1:8765/scan \
+    --payment 'x402-test:domainfi.discovery.scan:25000'
+```
+
+Arc fit: USDC-native gas, sub-second finality, EVM compatibility, and Circle Gateway/x402 make paid domain intelligence practical as pay-per-scan, pay-per-alert, and pay-per-API-call workflows. See [`docs/ARC_MVP.md`](docs/ARC_MVP.md) and [`examples/arc-x402-paid-agent/`](examples/arc-x402-paid-agent/).
 
 ## Proposed milestones
 
