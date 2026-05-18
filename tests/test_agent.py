@@ -55,6 +55,13 @@ class DiscoveryAgentTests(unittest.TestCase):
         results = agent.scan([wl], limit=2)
         self.assertLessEqual(len(results), 2)
 
+    def test_negative_limit_is_rejected(self) -> None:
+        wl = Watchlist.from_dict({"name": "open"})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+
+        with self.assertRaises(ValueError):
+            agent.scan([wl], limit=-1)
+
     def test_alerts_for_top_opportunities(self) -> None:
         wl = Watchlist.from_dict({"name": "open", "keywords": ["ai"]})
         agent = DiscoveryAgent(self.provider, today=self.today)
@@ -64,6 +71,33 @@ class DiscoveryAgentTests(unittest.TestCase):
         for alert in alerts:
             self.assertEqual(alert.severity, "watchlist")
             self.assertTrue(alert.title)
+
+    def test_scan_once_returns_metadata(self) -> None:
+        wl = Watchlist.from_dict({"name": "open", "keywords": ["ai"]})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+        result = agent.scan_once([wl], limit=2)
+        self.assertEqual(result.watchlists, ("open",))
+        self.assertLessEqual(len(result.opportunities), 2)
+        self.assertGreater(result.candidates_total, 0)
+        payload = result.to_dict()
+        self.assertIn("hit_rate", payload)
+        self.assertIn("opportunities", payload)
+
+    def test_run_loop_can_be_bounded_for_jobs(self) -> None:
+        wl = Watchlist.from_dict({"name": "open"})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+        results = list(agent.run_loop([wl], interval_seconds=0.001, iterations=2, notify=False))
+        self.assertEqual(len(results), 2)
+
+    def test_run_loop_reuses_generator_watchlists_each_iteration(self) -> None:
+        wl = Watchlist.from_dict({"name": "open"})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+        watchlists = (item for item in [wl])
+
+        results = list(agent.run_loop(watchlists, interval_seconds=0.001, iterations=2, notify=False))
+
+        self.assertEqual([result.watchlists for result in results], [("open",), ("open",)])
+        self.assertTrue(all(result.candidates_total > 0 for result in results))
 
 
 if __name__ == "__main__":  # pragma: no cover

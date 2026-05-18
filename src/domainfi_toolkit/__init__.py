@@ -11,7 +11,7 @@ SDK / API endpoints are available, a real provider can be plugged in
 behind the same ``DomainProvider`` interface.
 """
 
-from .agent import DiscoveryAgent
+from .agent import DiscoveryAgent, ScanResult
 from .models import (
     Alert,
     Domain,
@@ -21,9 +21,9 @@ from .models import (
     Signal,
     Watchlist,
 )
-from .notifiers import ConsoleNotifier, DiscordNotifier, Notifier, TelegramNotifier
+from .notifiers import ConsoleNotifier, DiscordNotifier, MultiNotifier, Notifier, TelegramNotifier
 from .providers import DomainProvider, MockDomainProvider
-from .scoring import score_domain
+from .scoring import explain, load_weights, reset_weights, score_domain
 from .watchlist import load_watchlists
 
 __version__ = "0.1.0"
@@ -32,6 +32,7 @@ __all__ = [
     "__version__",
     # Agent
     "DiscoveryAgent",
+    "ScanResult",
     # Models
     "Alert",
     "Domain",
@@ -44,12 +45,16 @@ __all__ = [
     "DomainProvider",
     "MockDomainProvider",
     # Scoring
+    "explain",
+    "load_weights",
+    "reset_weights",
     "score_domain",
     # Watchlists
     "load_watchlists",
     # Notifiers
     "ConsoleNotifier",
     "DiscordNotifier",
+    "MultiNotifier",
     "Notifier",
     "TelegramNotifier",
 ]

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+import json
 from datetime import date
+from pathlib import Path
 
 from domainfi_toolkit.models import Domain, Listing, Watchlist
-from domainfi_toolkit.scoring import score_domain
+from domainfi_toolkit.scoring import explain, load_weights, score_domain
 
 
 def make_domain(name: str = "agent.example", **kwargs) -> Domain:
@@ -80,6 +83,58 @@ class ScoreDomainTests(unittest.TestCase):
         result = score_domain(domain, wl)
         for signal in result.signals:
             self.assertTrue(signal.explanation, f"missing explanation for {signal.name}")
+
+    def test_explain_returns_compact_breakdown(self) -> None:
+        result = score_domain(make_domain("ai.example"), Watchlist.from_dict({"name": "demo", "keywords": ["ai"]}))
+        text = explain(result)
+        self.assertIn("ai.example", text)
+        self.assertIn("/100", text)
+
+    def test_load_weights_changes_signal_weights(self) -> None:
+        custom = {
+            "brandability": 10,
+            "keyword": 60,
+            "category": 10,
+            "tld": 5,
+            "price": 10,
+            "expiry": 5,
+        }
+        default = {
+            "brandability": 25,
+            "keyword": 30,
+            "category": 15,
+            "tld": 10,
+            "price": 15,
+            "expiry": 5,
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            custom_path = Path(tmp) / "weights.json"
+            default_path = Path(tmp) / "default.json"
+            custom_path.write_text(__import__("json").dumps(custom), encoding="utf-8")
+            default_path.write_text(__import__("json").dumps(default), encoding="utf-8")
+            try:
+                load_weights(custom_path)
+                result = score_domain(make_domain("ai.example"), Watchlist.from_dict({"name": "demo", "keywords": ["ai"]}))
+                keyword = next(s for s in result.signals if s.name == "keyword")
+                self.assertEqual(keyword.contribution, 60)
+            finally:
+                load_weights(default_path)
+
+    def test_load_weights_rejects_non_integer_numbers(self) -> None:
+        weights = {
+            "brandability": 25.5,
+            "keyword": 29.5,
+            "category": 15,
+            "tld": 10,
+            "price": 15,
+            "expiry": 5,
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "weights.json"
+            path.write_text(json.dumps(weights), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "must be an integer"):
+                load_weights(path)
 
 
 if __name__ == "__main__":  # pragma: no cover

@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Sequence, TextIO
 
@@ -23,6 +24,7 @@ from . import __version__
 from .agent import DiscoveryAgent
 from .notifiers import ConsoleNotifier
 from .providers import MockDomainProvider
+from .scoring import explain as explain_score, load_weights, reset_weights
 from .watchlist import load_watchlists
 
 
@@ -58,6 +60,40 @@ def build_parser() -> argparse.ArgumentParser:
         help="Maximum number of opportunities to return (default: 10).",
     )
     p_scan.add_argument(
+        "--sort-by",
+        choices=("score", "price", "name"),
+        default="score",
+        help="Sort opportunities by score, price, or domain name (default: score).",
+    )
+    p_scan.add_argument(
+        "--min-score",
+        type=int,
+        default=None,
+        help="Override watchlist min_score for this run.",
+    )
+    p_scan.add_argument(
+        "--weights",
+        type=Path,
+        default=None,
+        help="Optional scoring weights JSON file. Keys must sum to 100.",
+    )
+    p_scan.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        help="Write JSON payload to a file. Human output still goes to stdout unless --json is set.",
+    )
+    p_scan.add_argument(
+        "--explain",
+        action="store_true",
+        help="Print compact per-domain scoring explanations in human output.",
+    )
+    p_scan.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Accepted for CI/log compatibility; output is plain text by default.",
+    )
+    p_scan.add_argument(
         "--json",
         action="store_true",
         help="Emit machine-readable JSON instead of formatted output.",
@@ -80,21 +116,36 @@ def _cmd_version(_args: argparse.Namespace, out: TextIO) -> int:
 
 
 def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
+    if args.limit < 1:
+        print("error: --limit must be >= 1", file=sys.stderr)
+        return 2
+    if args.min_score is not None and not 0 <= args.min_score <= 100:
+        print("error: --min-score must be in 0..100", file=sys.stderr)
+        return 2
+
     try:
         watchlists = []
         for path in args.watchlist:
             watchlists.extend(load_watchlists(path))
-    except (OSError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
         print(f"error: failed to load watchlist: {exc}", file=sys.stderr)
         return 2
+    if args.min_score is not None:
+        watchlists = [replace(watchlist, min_score=args.min_score) for watchlist in watchlists]
 
     if not watchlists:
         print("error: no watchlists loaded", file=sys.stderr)
         return 2
 
-    if args.limit < 1:
-        print("error: --limit must be >= 1", file=sys.stderr)
-        return 2
+    # Always start from defaults so repeated CLI calls in one process cannot
+    # accidentally inherit custom weights from a prior run.
+    reset_weights()
+    if args.weights:
+        try:
+            load_weights(args.weights)
+        except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+            print(f"error: failed to load weights: {exc}", file=sys.stderr)
+            return 2
 
     if args.inventory:
         try:
@@ -106,19 +157,34 @@ def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
         provider = MockDomainProvider.default()
 
     agent = DiscoveryAgent(provider=provider)
-    opportunities = agent.scan(watchlists=watchlists, limit=args.limit)
+    opportunities = agent.scan(watchlists=watchlists)
+    if args.min_score is not None:
+        opportunities = [opp for opp in opportunities if opp.score.score >= args.min_score]
+    opportunities = _sort_opportunities(opportunities, args.sort_by)[: args.limit]
+
+    payload = {
+        "version": __version__,
+        "watchlists": [wl.name for wl in watchlists],
+        "count": len(opportunities),
+        "opportunities": [opp.to_dict() for opp in opportunities],
+    }
+    if args.output:
+        try:
+            args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        except OSError as exc:
+            print(f"error: failed to write output: {exc}", file=sys.stderr)
+            return 2
 
     if args.json:
-        payload = {
-            "version": __version__,
-            "watchlists": [wl.name for wl in watchlists],
-            "count": len(opportunities),
-            "opportunities": [opp.to_dict() for opp in opportunities],
-        }
         print(json.dumps(payload, indent=2, sort_keys=True), file=out)
         return 0
 
-    _print_human_readable(opportunities, watchlists_named=[wl.name for wl in watchlists], out=out)
+    _print_human_readable(
+        opportunities,
+        watchlists_named=[wl.name for wl in watchlists],
+        out=out,
+        explain=args.explain,
+    )
 
     notifier = ConsoleNotifier(stream=out)
     alerts = DiscoveryAgent.alerts_for(opportunities[:3])
@@ -129,7 +195,18 @@ def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
     return 0
 
 
-def _print_human_readable(opportunities, *, watchlists_named, out: TextIO) -> None:
+def _sort_opportunities(opportunities, sort_by: str):
+    if sort_by == "price":
+        return sorted(
+            opportunities,
+            key=lambda opp: (float("inf") if opp.listing is None else opp.listing.price_usd, opp.domain.name),
+        )
+    if sort_by == "name":
+        return sorted(opportunities, key=lambda opp: opp.domain.name)
+    return sorted(opportunities, key=lambda opp: opp.score.score, reverse=True)
+
+
+def _print_human_readable(opportunities, *, watchlists_named, out: TextIO, explain: bool = False) -> None:
     print(f"Watchlists scanned: {', '.join(watchlists_named)}", file=out)
     print(f"Found {len(opportunities)} domain opportunities", file=out)
     if not opportunities:
@@ -143,6 +220,8 @@ def _print_human_readable(opportunities, *, watchlists_named, out: TextIO) -> No
         for signal in opp.score.signals:
             if signal.contribution:
                 print(f"      + {signal.name:<13} {signal.contribution:>3}  {signal.explanation}", file=out)
+        if explain:
+            print(f"      explain: {explain_score(opp.score)}", file=out)
 
 
 if __name__ == "__main__":  # pragma: no cover
