@@ -72,6 +72,8 @@ class DiscoveryAgent:
         *,
         notify: bool = False,
     ) -> ScanResult:
+        if limit is not None and limit < 1:
+            raise ValueError("limit must be >= 1")
         watchlists = list(watchlists)
         domains = list(self._provider.list_domains())
         listings_by_domain: dict[str, Listing] = {
@@ -138,6 +140,9 @@ class DiscoveryAgent:
 
         if interval_seconds <= 0:
             raise ValueError("interval_seconds must be > 0")
+        if limit is not None and limit < 1:
+            raise ValueError("limit must be >= 1")
+        watchlists = tuple(watchlists)
         completed = 0
         while iterations is None or completed < iterations:
             yield self.scan_once(watchlists=watchlists, limit=limit, notify=notify)

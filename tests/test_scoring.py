@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 import tempfile
+import json
 from datetime import date
 from pathlib import Path
 
@@ -118,6 +119,22 @@ class ScoreDomainTests(unittest.TestCase):
                 self.assertEqual(keyword.contribution, 60)
             finally:
                 load_weights(default_path)
+
+    def test_load_weights_rejects_non_integer_numbers(self) -> None:
+        weights = {
+            "brandability": 25.5,
+            "keyword": 29.5,
+            "category": 15,
+            "tld": 10,
+            "price": 15,
+            "expiry": 5,
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "weights.json"
+            path.write_text(json.dumps(weights), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "must be an integer"):
+                load_weights(path)
 
 
 if __name__ == "__main__":  # pragma: no cover

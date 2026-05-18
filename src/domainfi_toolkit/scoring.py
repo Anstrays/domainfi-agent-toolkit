@@ -59,12 +59,9 @@ def _weight(name: str) -> int:
 
 
 def _coerce_weight(name: str, value: object) -> int:
-    if isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, int):
         raise ValueError(f"weight {name!r} must be an integer")
-    try:
-        return int(value)  # type: ignore[arg-type]
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"weight {name!r} must be an integer") from exc
+    return value
 
 
 def reset_weights() -> None:

@@ -55,6 +55,13 @@ class DiscoveryAgentTests(unittest.TestCase):
         results = agent.scan([wl], limit=2)
         self.assertLessEqual(len(results), 2)
 
+    def test_negative_limit_is_rejected(self) -> None:
+        wl = Watchlist.from_dict({"name": "open"})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+
+        with self.assertRaises(ValueError):
+            agent.scan([wl], limit=-1)
+
     def test_alerts_for_top_opportunities(self) -> None:
         wl = Watchlist.from_dict({"name": "open", "keywords": ["ai"]})
         agent = DiscoveryAgent(self.provider, today=self.today)
@@ -81,6 +88,16 @@ class DiscoveryAgentTests(unittest.TestCase):
         agent = DiscoveryAgent(self.provider, today=self.today)
         results = list(agent.run_loop([wl], interval_seconds=0.001, iterations=2, notify=False))
         self.assertEqual(len(results), 2)
+
+    def test_run_loop_reuses_generator_watchlists_each_iteration(self) -> None:
+        wl = Watchlist.from_dict({"name": "open"})
+        agent = DiscoveryAgent(self.provider, today=self.today)
+        watchlists = (item for item in [wl])
+
+        results = list(agent.run_loop(watchlists, interval_seconds=0.001, iterations=2, notify=False))
+
+        self.assertEqual([result.watchlists for result in results], [("open",), ("open",)])
+        self.assertTrue(all(result.candidates_total > 0 for result in results))
 
 
 if __name__ == "__main__":  # pragma: no cover

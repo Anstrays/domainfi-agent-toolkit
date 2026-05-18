@@ -33,9 +33,11 @@ class _Cooldown:
     """Allow at most one send per ``seconds`` window."""
 
     seconds: float
-    _last_sent: float = field(default=0.0, init=False, repr=False)
+    _last_sent: float | None = field(default=None, init=False, repr=False)
 
     def ready(self) -> bool:
+        if self._last_sent is None:
+            return True
         return (time.monotonic() - self._last_sent) >= self.seconds
 
     def mark(self) -> None:

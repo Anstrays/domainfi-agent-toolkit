@@ -64,6 +64,15 @@ class TestConsoleNotifier(unittest.TestCase):
         self.assertEqual(notifier.send([_make_opp("second.com")]), 0)
         self.assertNotIn("second.com", stream.getvalue())
 
+    def test_cooldown_allows_first_send_even_when_monotonic_clock_is_low(self) -> None:
+        stream = io.StringIO()
+        notifier = ConsoleNotifier(stream=stream, cooldown_seconds=300)
+
+        with patch("domainfi_toolkit.notifiers.time.monotonic", return_value=1.0):
+            self.assertEqual(notifier.send([_make_opp()]), 1)
+
+        self.assertIn("example.com", stream.getvalue())
+
 
 class TestTelegramNotifier(unittest.TestCase):
     def test_dry_run_without_credentials(self) -> None:
