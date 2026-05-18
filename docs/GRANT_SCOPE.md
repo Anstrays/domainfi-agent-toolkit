@@ -28,6 +28,7 @@ Build an agent layer that helps users and developers:
 4. Telegram/Discord notification examples
 5. Developer templates and documentation
 6. Public write-up showing how to build agentic DomainFi workflows on Doma
+7. Arc/Circle paid-agent MVP showing x402-style pay-per-scan monetization, Arc Testnet constants, and USDC unit economics
 
 ## Success criteria
 
@@ -35,6 +36,7 @@ Build an agent layer that helps users and developers:
 - A user can define a watchlist and receive useful alerts.
 - The scoring pipeline produces transparent explanations rather than opaque recommendations.
 - The project avoids custody, private-key handling, or automated transactions in the first milestone.
+- A builder can run a local Arc paid-agent demo and understand how to replace the local x402 test proof with Circle Gateway/x402 verification.
 
 ## Requested Forge support
 

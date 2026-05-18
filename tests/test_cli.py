@@ -20,6 +20,33 @@ class CliTests(unittest.TestCase):
         self.assertEqual(rc, 0)
         self.assertIn("domainfi-agent", out.getvalue())
 
+    def test_arc_mvp_json_output(self) -> None:
+        out = io.StringIO()
+        rc = main(["arc-mvp", "--json"], stdout=out)
+        self.assertEqual(rc, 0)
+        payload = json.loads(out.getvalue())
+        self.assertEqual(payload["arc"]["chain_id"], 5042002)
+        self.assertEqual(payload["arc"]["native_gas_token"], "USDC")
+        self.assertEqual(payload["x402_challenge"]["status"], 402)
+        self.assertGreater(payload["unit_economics"]["gross_margin_microusd"], 0)
+        self.assertIn("demand_thesis", payload)
+
+    def test_arc_mvp_rejects_negative_price(self) -> None:
+        out = io.StringIO()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(["arc-mvp", "--price-microusd", "-1"], stdout=out)
+        self.assertEqual(rc, 2)
+        self.assertIn("invalid Arc MVP parameters", err.getvalue())
+
+    def test_arc_mvp_rejects_zero_price(self) -> None:
+        out = io.StringIO()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = main(["arc-mvp", "--price-microusd", "0"], stdout=out)
+        self.assertEqual(rc, 2)
+        self.assertIn("invalid Arc MVP parameters", err.getvalue())
+
     def test_scan_human_readable(self) -> None:
         out = io.StringIO()
         rc = main(["scan", "--watchlist", str(EXAMPLE_WATCHLIST)], stdout=out)

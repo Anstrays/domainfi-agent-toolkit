@@ -1,0 +1,11 @@
+{
+  "network": "arc-testnet",
+  "chain_id": 5042002,
+  "rpc_url": "https://rpc.testnet.arc.network",
+  "explorer_url": "https://testnet.arcscan.app",
+  "faucet_url": "https://faucet.circle.com",
+  "native_gas_token": "USDC",
+  "resource": "domainfi.discovery.scan",
+  "price_microusd": 25000,
+  "asset": "USDC"
+}

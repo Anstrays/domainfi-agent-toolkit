@@ -33,6 +33,8 @@
 
 ## Phase 4 — Builder templates
 
+- [x] Arc x402 paid discovery agent example
+- [x] Arc Testnet runbook and USDC unit economics
 - [ ] Example Telegram bot
 - [ ] Example Discord bot
 - [ ] Example webhook receiver
