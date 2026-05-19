@@ -129,7 +129,28 @@ PYTHONPATH=src python3 -m domainfi_toolkit arc-verify \
     --payment 'x402-test:domainfi.discovery.scan:25000' \
     --json
 
+# Verify an opaque production x402 proof against a configured Circle Gateway verifier
+CIRCLE_GATEWAY_URL=https://gateway.example.test/v1 \
+CIRCLE_GATEWAY_API_KEY=redacted \
+PYTHONPATH=src python3 -m domainfi_toolkit arc-gateway-verify \
+    --payment '<opaque-x402-proof>' \
+    --json
+
+# Scan with a Doma-compatible HTTP provider instead of bundled mock inventory
+DOMA_API_URL=https://api.example.test/v1 \
+DOMA_API_KEY=redacted \
+PYTHONPATH=src python3 -m domainfi_toolkit scan \
+    --watchlist examples/watchlists/brandable-ai.json \
+    --provider doma-http \
+    --json
+
 # Run the local paid agent endpoint
+PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
+
+# Run the paid endpoint in Gateway verification mode
+DOMAINFI_PAYMENT_MODE=gateway \
+CIRCLE_GATEWAY_URL=https://gateway.example.test/v1 \
+CIRCLE_GATEWAY_API_KEY=redacted \
 PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
 
 # Or run the full local smoke test: server boot, unpaid 402, paid 200, receipt check

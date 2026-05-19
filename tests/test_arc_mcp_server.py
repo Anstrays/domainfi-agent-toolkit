@@ -37,6 +37,7 @@ class ArcMcpServerTests(unittest.TestCase):
         names = {tool["name"] for tool in tools["result"]["tools"]}
         self.assertIn("domainfi_arc_payment_intent", names)
         self.assertIn("domainfi_arc_payment_verify", names)
+        self.assertIn("domainfi_arc_gateway_verify", names)
         self.assertIn("domainfi_arc_paid_scan", names)
 
     def test_mcp_call_tool_returns_content_and_structured_result(self) -> None:

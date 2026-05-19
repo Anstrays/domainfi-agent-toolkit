@@ -2,9 +2,9 @@
 
 A dependency-free local demo of a paid DomainFi discovery endpoint.
 
-This is an **x402-style local demo**, not production wire-compatible x402 verification. It uses a deterministic `X-Payment: x402-test:...` proof so builders can test the payment loop without keys or custody. Replace the verifier with Circle Gateway/x402 verification before production.
+This is an **x402-style local demo by default**, not production wire-compatible x402 verification. It uses a deterministic `X-Payment: x402-test:...` proof so builders can test the payment loop without keys or custody. For production-style verification, run `--payment-mode gateway` with `CIRCLE_GATEWAY_URL` and `CIRCLE_GATEWAY_API_KEY` supplied through deployment secrets.
 
-Run it on localhost only. Do not bind this demo to a public interface because the local proof is intentionally static.
+Run the local-demo mode on localhost only. Do not bind that mode to a public interface because the local proof is intentionally static.
 
 ## Run
 
@@ -19,6 +19,12 @@ python3 examples/arc-x402-paid-agent/client.py --url http://127.0.0.1:8765/scan
 python3 examples/arc-x402-paid-agent/client.py \
   --url http://127.0.0.1:8765/scan \
   --payment 'x402-test:domainfi.discovery.scan:25000'
+
+# Optional production-style verifier seam: Circle Gateway/x402 verification
+DOMAINFI_PAYMENT_MODE=gateway \
+CIRCLE_GATEWAY_URL=https://gateway.example.test/v1 \
+CIRCLE_GATEWAY_API_KEY=redacted \
+PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
 ```
 
 The local payment proof is deliberately fake and deterministic. Production wiring should replace it with Circle Gateway/x402 buyer and seller flows.
@@ -41,6 +47,11 @@ PYTHONPATH=src python3 -m domainfi_toolkit arc-tools --json
 PYTHONPATH=src python3 -m domainfi_toolkit arc-intent --json
 PYTHONPATH=src python3 -m domainfi_toolkit arc-verify \
   --payment 'x402-test:domainfi.discovery.scan:25000' \
+  --json
+CIRCLE_GATEWAY_URL=https://gateway.example.test/v1 \
+CIRCLE_GATEWAY_API_KEY=redacted \
+PYTHONPATH=src python3 -m domainfi_toolkit arc-gateway-verify \
+  --payment '<opaque-x402-proof>' \
   --json
 
 # JSON-RPC/MCP-style stdio server
