@@ -19,6 +19,7 @@ from typing import Any
 
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
 _EVM_ADDRESS_RE = re.compile(r"^0x[a-fA-F0-9]{40}$")
+_SAFE_MEMO_RE = re.compile(r"^[A-Za-z0-9 .,_:/()#@+-]{0,160}$")
 
 
 @dataclass(frozen=True)
@@ -231,4 +232,215 @@ def build_paid_discovery_payload(
             "Sub-second deterministic finality fits pay-per-alert and pay-per-scan agent loops.",
             "Gateway/x402 can turn DomainFi intelligence into a paid API without subscriptions first.",
         ],
+    }
+
+
+def _validate_memo(memo: str | None) -> str | None:
+    if memo is None:
+        return None
+    clean_memo = str(memo).strip()
+    if not _SAFE_MEMO_RE.fullmatch(clean_memo):
+        raise ValueError("memo may only contain safe printable characters and must be <= 160 chars")
+    return clean_memo
+
+
+def build_arc_builder_context() -> dict[str, Any]:
+    """Return source-grounded Arc context for coding agents and docs.
+
+    The shape deliberately separates public Arc facts from repo choices and
+    unknown production work so an implementation agent cannot silently turn the
+    local demo verifier into a real custody or settlement flow.
+    """
+
+    return {
+        "official_arc_facts": {
+            "network": "Arc Testnet",
+            "chain_id": ARC_TESTNET.chain_id,
+            "chain_id_hex": "0x4CEF52",
+            "rpc_url": ARC_TESTNET.rpc_url,
+            "explorer_url": ARC_TESTNET.explorer_url,
+            "faucet_url": ARC_TESTNET.faucet_url,
+            "native_gas_token": ARC_TESTNET.native_gas_token,
+            "erc20_usdc_decimals": 6,
+            "native_gas_decimals": 18,
+            "cctp_domain": 26,
+            "source_docs": [
+                "https://docs.arc.network/llms.txt",
+                "https://developers.circle.com/llms.txt",
+            ],
+        },
+        "repo_implementation_choices": [
+            "Expose a dependency-free demo-only x402-test proof for local paid-agent flows.",
+            "Use integer microUSD prices so sub-cent API calls avoid float ambiguity.",
+            "Keep example servers bound to localhost unless the operator explicitly changes --host.",
+            "Return JSON payment intents, receipts, and unit economics for agent consumption.",
+        ],
+        "assumptions_and_unknowns": [
+            "Production Circle Gateway/x402 verification is intentionally not implemented in this repo.",
+            "A production seller address, policy, rate limits, and receipt storage must be configured outside the demo.",
+            "Human wallet approval remains mandatory for real Arc Testnet transactions.",
+        ],
+        "non_goals": [
+            "No private keys, custody, autonomous spending, or mainnet fallback.",
+            "No claims that x402-test is wire-compatible with production x402 settlement.",
+        ],
+    }
+
+
+def build_arc_mcp_manifest() -> dict[str, Any]:
+    """Return an MCP-style manifest for safe Arc paid-agent tools."""
+
+    context = build_arc_builder_context()
+    return {
+        "name": "domainfi-arc-paid-agent-tools",
+        "version": "0.1.0",
+        "network": ARC_TESTNET.to_dict(),
+        "tools": [
+            {
+                "name": "domainfi_arc_payment_intent",
+                "description": "Build a machine-readable Arc Testnet / x402-style payment intent for a paid DomainFi resource.",
+                "input_schema": {
+                    "type": "object",
+                    "required": ["resource", "amount_microusd", "pay_to"],
+                    "properties": {
+                        "resource": {"type": "string", "pattern": _RESOURCE_RE.pattern},
+                        "amount_microusd": {"type": "integer", "minimum": 1},
+                        "pay_to": {"type": "string", "pattern": _EVM_ADDRESS_RE.pattern},
+                    },
+                },
+            },
+            {
+                "name": "domainfi_arc_payment_verify",
+                "description": "Verify a local demo X-Payment proof and return an agent-readable receipt or rejection.",
+                "input_schema": {
+                    "type": "object",
+                    "required": ["payment", "resource", "amount_microusd"],
+                    "properties": {
+                        "payment": {"type": "string"},
+                        "resource": {"type": "string", "pattern": _RESOURCE_RE.pattern},
+                        "amount_microusd": {"type": "integer", "minimum": 1},
+                    },
+                },
+            },
+            {
+                "name": "domainfi_arc_paid_scan",
+                "description": "Run the paid DomainFi discovery scan after payment verification succeeds.",
+                "input_schema": {
+                    "type": "object",
+                    "properties": {
+                        "watchlist": {"type": "string"},
+                        "limit": {"type": "integer", "minimum": 1, "maximum": 50},
+                    },
+                },
+            },
+            {
+                "name": "domainfi_arc_unit_economics",
+                "description": "Estimate microUSD cost, price, and margin for pay-per-scan/alert/report products.",
+                "input_schema": {
+                    "type": "object",
+                    "required": ["price_microusd"],
+                    "properties": {
+                        "provider_cost_microusd": {"type": "integer", "minimum": 0},
+                        "infra_cost_microusd": {"type": "integer", "minimum": 0},
+                        "settlement_cost_microusd": {"type": "integer", "minimum": 0},
+                        "price_microusd": {"type": "integer", "minimum": 1},
+                    },
+                },
+            },
+        ],
+        "production_replacement_boundary": (
+            "Replace parse_x402_payment_header/verify_x402_payment_header with "
+            "Circle Gateway/x402 verification before accepting real payments."
+        ),
+        "safety": {
+            "testnet_only": True,
+            "human_wallet_approval_required": True,
+            "no_private_keys": True,
+            "no_autonomous_spending": True,
+            "local_demo_proof_only": True,
+        },
+        "builder_context": context,
+    }
+
+
+def build_payment_intent(
+    *,
+    resource: str,
+    amount_microusd: int,
+    pay_to: str,
+    provider_cost_microusd: int = 7_000,
+    infra_cost_microusd: int = 2_000,
+    settlement_cost_microusd: int = 1_000,
+    memo: str | None = None,
+) -> dict[str, Any]:
+    """Build a complete local-demo Arc payment intent for agent clients."""
+
+    clean_resource = _validate_resource(resource)
+    amount = _validate_positive_int(amount_microusd, name="amount_microusd")
+    economics = estimate_unit_economics(
+        provider_cost_microusd=provider_cost_microusd,
+        infra_cost_microusd=infra_cost_microusd,
+        settlement_cost_microusd=settlement_cost_microusd,
+        price_microusd=amount,
+    )
+    intent = {
+        "kind": "arc_testnet_payment_intent",
+        "status": "requires_payment",
+        "network": ARC_TESTNET.to_dict(),
+        "challenge": build_payment_required_response(resource=clean_resource, amount_microusd=amount, pay_to=pay_to),
+        "local_demo_proof": f"x402-test:{clean_resource}:{amount}",
+        "unit_economics": economics.to_dict(),
+        "production_verifier": "Circle Gateway/x402 verification replaces the local x402-test proof parser.",
+    }
+    clean_memo = _validate_memo(memo)
+    if clean_memo:
+        intent["memo"] = clean_memo
+    return intent
+
+
+def verify_payment_intent(header: str | None, *, resource: str, amount_microusd: int) -> dict[str, Any]:
+    """Verify a local-demo payment proof and return a stable receipt shape."""
+
+    clean_resource = _validate_resource(resource)
+    amount = _validate_positive_int(amount_microusd, name="amount_microusd")
+    try:
+        payment = parse_x402_payment_header(header or "")
+    except (TypeError, ValueError) as exc:
+        return {
+            "paid": False,
+            "status": "rejected",
+            "reason": str(exc),
+            "resource": clean_resource,
+            "required_amount_microusd": amount,
+            "network": ARC_TESTNET.to_dict(),
+        }
+    if payment.resource != clean_resource:
+        return {
+            "paid": False,
+            "status": "rejected",
+            "reason": "payment resource does not match requested resource",
+            "resource": clean_resource,
+            "required_amount_microusd": amount,
+            "received": payment.to_dict(),
+            "network": ARC_TESTNET.to_dict(),
+        }
+    if payment.amount_microusd < amount:
+        return {
+            "paid": False,
+            "status": "rejected",
+            "reason": "payment amount is below required amount",
+            "resource": clean_resource,
+            "required_amount_microusd": amount,
+            "received": payment.to_dict(),
+            "network": ARC_TESTNET.to_dict(),
+        }
+    return {
+        "paid": True,
+        "status": "accepted",
+        "resource": clean_resource,
+        "required_amount_microusd": amount,
+        "received": payment.to_dict(),
+        "network": ARC_TESTNET.to_dict(),
+        "local_demo_only": True,
+        "production_verifier": "Use Circle Gateway/x402 receipt verification before real settlement.",
     }

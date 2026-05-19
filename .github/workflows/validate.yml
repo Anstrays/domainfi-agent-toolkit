@@ -56,3 +56,12 @@ jobs:
             --limit 2 --sort-by price --explain --no-color \
             --output /tmp/scan-output.json
           python -c "import json; data = json.load(open('/tmp/scan-output.json')); assert data['count'] <= 2 and 'opportunities' in data, data"
+          python -m domainfi_toolkit arc-tools --json > /tmp/arc-tools.json
+          python -m domainfi_toolkit arc-intent --json > /tmp/arc-intent.json
+          python -m domainfi_toolkit arc-verify \
+            --payment 'x402-test:domainfi.discovery.scan:25000' \
+            --json > /tmp/arc-verify.json
+          python -c "import json; assert json.load(open('/tmp/arc-verify.json'))['paid'] is True"
+          printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | python -m domainfi_toolkit.arc_mcp > /tmp/arc-mcp.json
+          python -c "import json; data=json.load(open('/tmp/arc-mcp.json')); assert any(t['name']=='domainfi_arc_payment_intent' for t in data['result']['tools'])"
+          python scripts/smoke_arc_paid_agent.py

@@ -54,6 +54,45 @@ python3 examples/arc-x402-paid-agent/client.py \
 
 No private keys or production Circle credentials are required for the local MVP.
 
+## MCP-style agent tools
+
+The Arc layer now exposes a dependency-free manifest and a minimal JSON-RPC/MCP-style stdio server that coding agents and future MCP deployments can reuse without importing web3 libraries:
+
+```bash
+# Tool names, JSON schemas, safety flags, and production boundary
+PYTHONPATH=src python3 -m domainfi_toolkit arc-tools --json
+
+# Build a payment intent for a paid resource
+PYTHONPATH=src python3 -m domainfi_toolkit arc-intent \
+  --resource domainfi.discovery.scan \
+  --price-microusd 25000 \
+  --pay-to 0x0000000000000000000000000000000000000000 \
+  --json
+
+# Verify a local demo proof and return a receipt/rejection
+PYTHONPATH=src python3 -m domainfi_toolkit arc-verify \
+  --resource domainfi.discovery.scan \
+  --price-microusd 25000 \
+  --payment 'x402-test:domainfi.discovery.scan:25000' \
+  --json
+
+# List tools through the stdio JSON-RPC/MCP-style server
+printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
+  PYTHONPATH=src python3 -m domainfi_toolkit.arc_mcp
+
+# End-to-end smoke test the local HTTP paid-agent loop
+python3 scripts/smoke_arc_paid_agent.py
+```
+
+The manifest currently describes four safe tools:
+
+- `domainfi_arc_payment_intent`: build an Arc Testnet payment intent and 402 challenge.
+- `domainfi_arc_payment_verify`: verify the local demo proof and return a receipt shape.
+- `domainfi_arc_paid_scan`: run the paid DomainFi scan after verification succeeds.
+- `domainfi_arc_unit_economics`: calculate microUSD cost, price, and margin.
+
+The reusable coding-agent prompt is in [`prompts/wire-arc-testnet-status.md`](../prompts/wire-arc-testnet-status.md). It forces source grounding, explicit assumptions, TDD, and the Circle Gateway/x402 production replacement boundary.
+
 Important: this is an **x402-style local demo**, not production wire-compatible x402 verification. The deterministic `x402-test:*` proof exists only so the HTTP 402 -> paid retry loop can run without keys. Run the example on localhost only; do not expose it publicly until `verify_x402_payment_header(...)` is replaced with Circle Gateway/x402 verification.
 
 ## Production wiring path

@@ -22,7 +22,14 @@ from typing import Sequence, TextIO
 
 from . import __version__
 from .agent import DiscoveryAgent
-from .arc import ARC_TESTNET, build_payment_required_response, estimate_unit_economics
+from .arc import (
+    ARC_TESTNET,
+    build_arc_mcp_manifest,
+    build_payment_intent,
+    build_payment_required_response,
+    estimate_unit_economics,
+    verify_payment_intent,
+)
 from .notifiers import ConsoleNotifier
 from .providers import MockDomainProvider
 from .scoring import explain as explain_score, load_weights, reset_weights
@@ -139,6 +146,23 @@ def build_parser() -> argparse.ArgumentParser:
     p_arc.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     p_arc.set_defaults(func=_cmd_arc_mvp)
 
+    p_arc_tools = sub.add_parser("arc-tools", help="Print MCP-style Arc paid-agent tool manifest.")
+    p_arc_tools.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    p_arc_tools.set_defaults(func=_cmd_arc_tools)
+
+    p_arc_intent = sub.add_parser("arc-intent", help="Build an Arc x402-style payment intent.")
+    _add_arc_payment_args(p_arc_intent)
+    p_arc_intent.add_argument("--memo", default=None, help="Optional safe memo for the intent.")
+    p_arc_intent.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    p_arc_intent.set_defaults(func=_cmd_arc_intent)
+
+    p_arc_verify = sub.add_parser("arc-verify", help="Verify a local Arc x402-test payment proof.")
+    p_arc_verify.add_argument("--resource", default="domainfi.discovery.scan")
+    p_arc_verify.add_argument("--price-microusd", type=int, default=25_000)
+    p_arc_verify.add_argument("--payment", required=True, help="X-Payment header value to verify.")
+    p_arc_verify.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    p_arc_verify.set_defaults(func=_cmd_arc_verify)
+
     return parser
 
 
@@ -152,6 +176,94 @@ def main(argv: Sequence[str] | None = None, stdout: TextIO | None = None) -> int
 def _cmd_version(_args: argparse.Namespace, out: TextIO) -> int:
     print(f"domainfi-agent {__version__}", file=out)
     return 0
+
+
+def _add_arc_payment_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--resource", default="domainfi.discovery.scan")
+    parser.add_argument(
+        "--price-microusd",
+        type=int,
+        default=25_000,
+        help="Price per request in microUSD (default: 25000 = $0.025).",
+    )
+    parser.add_argument(
+        "--provider-cost-microusd",
+        type=int,
+        default=7_000,
+        help="Estimated provider/model cost per request in microUSD.",
+    )
+    parser.add_argument(
+        "--infra-cost-microusd",
+        type=int,
+        default=2_000,
+        help="Estimated infra cost per request in microUSD.",
+    )
+    parser.add_argument(
+        "--settlement-cost-microusd",
+        type=int,
+        default=1_000,
+        help="Estimated settlement/accounting cost per request in microUSD.",
+    )
+    parser.add_argument(
+        "--pay-to",
+        default="0x0000000000000000000000000000000000000000",
+        help="Demo seller address for the x402 challenge.",
+    )
+
+
+def _cmd_arc_tools(args: argparse.Namespace, out: TextIO) -> int:
+    manifest = build_arc_mcp_manifest()
+    if args.json:
+        print(json.dumps(manifest, indent=2, sort_keys=True), file=out)
+        return 0
+    print("Arc paid-agent MCP tools", file=out)
+    print(f"Network: {manifest['network']['name']} chain_id={manifest['network']['chain_id']}", file=out)
+    for tool in manifest["tools"]:
+        print(f"- {tool['name']}: {tool['description']}", file=out)
+    print(f"Boundary: {manifest['production_replacement_boundary']}", file=out)
+    return 0
+
+
+def _cmd_arc_intent(args: argparse.Namespace, out: TextIO) -> int:
+    try:
+        intent = build_payment_intent(
+            resource=args.resource,
+            amount_microusd=args.price_microusd,
+            pay_to=args.pay_to,
+            provider_cost_microusd=args.provider_cost_microusd,
+            infra_cost_microusd=args.infra_cost_microusd,
+            settlement_cost_microusd=args.settlement_cost_microusd,
+            memo=args.memo,
+        )
+    except (TypeError, ValueError) as exc:
+        print(f"error: invalid Arc payment intent parameters: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(intent, indent=2, sort_keys=True), file=out)
+        return 0
+    print("Arc payment intent", file=out)
+    print(f"Resource: {args.resource}", file=out)
+    print(f"Price: {args.price_microusd} microUSD", file=out)
+    print(f"Payment header demo: X-Payment: {intent['local_demo_proof']}", file=out)
+    return 0
+
+
+def _cmd_arc_verify(args: argparse.Namespace, out: TextIO) -> int:
+    try:
+        receipt = verify_payment_intent(
+            args.payment,
+            resource=args.resource,
+            amount_microusd=args.price_microusd,
+        )
+    except (TypeError, ValueError) as exc:
+        print(f"error: invalid Arc payment verification parameters: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(receipt, indent=2, sort_keys=True), file=out)
+    else:
+        status = "accepted" if receipt["paid"] else f"rejected: {receipt.get('reason', 'unknown')}"
+        print(f"Arc payment verification {status}", file=out)
+    return 0 if receipt["paid"] else 2
 
 
 def _cmd_arc_mvp(args: argparse.Namespace, out: TextIO) -> int:
