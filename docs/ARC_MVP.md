@@ -97,6 +97,14 @@ printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
 
 # End-to-end smoke test the local HTTP paid-agent loop
 python3 scripts/smoke_arc_paid_agent.py
+
+# Post-deploy live smoke: first 402 challenge only, then paid proof check
+ARC_PAID_AGENT_URL=https://paid-agent.example.test \
+python3 scripts/live_arc_gateway_smoke.py --expect-402-only
+
+ARC_PAID_AGENT_URL=https://paid-agent.example.test \
+ARC_LIVE_X_PAYMENT=redacted \
+python3 scripts/live_arc_gateway_smoke.py
 ```
 
 The manifest currently describes five safe tools:
@@ -109,7 +117,7 @@ The manifest currently describes five safe tools:
 
 The reusable coding-agent prompt is in [`prompts/wire-arc-testnet-status.md`](../prompts/wire-arc-testnet-status.md). It forces source grounding, explicit assumptions, TDD, and the Circle Gateway/x402 production replacement boundary.
 
-Important: the default mode is an **x402-style local demo**, not production wire-compatible x402 verification. The deterministic `x402-test:*` proof exists only so the HTTP 402 -> paid retry loop can run without keys. Production mode is now wired as a pluggable verifier seam (`arc-gateway-verify`, `domainfi_arc_gateway_verify`, and `--payment-mode gateway`), but it still requires a real Circle Gateway verifier URL/API key supplied through deployment secrets.
+Important: the default mode is an **x402-style local demo**, not production wire-compatible x402 verification. The deterministic `x402-test:*` proof exists only so the HTTP 402 -> paid retry loop can run without keys. Production mode is now wired as a pluggable verifier seam (`arc-gateway-verify`, `domainfi_arc_gateway_verify`, and `--payment-mode gateway`), but it still requires a real Circle Gateway verifier URL/API key supplied through deployment secrets. Use [`docs/ARC_PRODUCTION_DEPLOYMENT.md`](ARC_PRODUCTION_DEPLOYMENT.md) for the production checklist, `.env.example`, deploy commands, and live smoke script.
 
 ## Production wiring path
 

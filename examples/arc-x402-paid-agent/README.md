@@ -60,7 +60,12 @@ printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
 
 # Full local HTTP smoke test
 python3 scripts/smoke_arc_paid_agent.py
+
+# Production deployment checklist and live smoke runbook
+python3 scripts/live_arc_gateway_smoke.py --help
 ```
+
+For deployment, copy `.env.example` into your platform's secret/env UI and follow [`docs/ARC_PRODUCTION_DEPLOYMENT.md`](../../docs/ARC_PRODUCTION_DEPLOYMENT.md). Use `scripts/live_arc_gateway_smoke.py --expect-402-only` for a post-deploy challenge check, then rerun it with `ARC_LIVE_X_PAYMENT` after a real buyer/Gateway proof is available.
 
 ## Why this example matters
 
@@ -69,4 +74,3 @@ It demonstrates the product loop we want on Arc:
 - DomainFi signal is a paid API resource.
 - Arc/Gateway/x402 handles money movement in USDC.
 - The app can price each scan or alert without a subscription wall.
-- Doma integration can be swapped in behind the provider interface later.

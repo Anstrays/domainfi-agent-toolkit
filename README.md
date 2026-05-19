@@ -7,7 +7,7 @@ AI-powered agents and developer templates for discovering, monitoring, and actin
 [![Status: proposal](https://img.shields.io/badge/status-proposal%20%26%20prototype-7cf7c9)](docs/ROADMAP.md)
 [![GitHub Pages](https://img.shields.io/badge/site-anstrays.github.io-78a8ff?logo=githubpages&logoColor=white)](https://anstrays.github.io/domainfi-agent-toolkit/)
 
-[Live project page](https://anstrays.github.io/domainfi-agent-toolkit/) · [Architecture](docs/ARCHITECTURE.md) · [Arc MVP](docs/ARC_MVP.md) · [Roadmap](docs/ROADMAP.md) · [Grant scope](docs/GRANT_SCOPE.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
+[Live project page](https://anstrays.github.io/domainfi-agent-toolkit/) · [Architecture](docs/ARCHITECTURE.md) · [Arc MVP](docs/ARC_MVP.md) · [Arc deployment](docs/ARC_PRODUCTION_DEPLOYMENT.md) · [Roadmap](docs/ROADMAP.md) · [Grant scope](docs/GRANT_SCOPE.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Code of Conduct](CODE_OF_CONDUCT.md)
 
 > Status: early Doma Forge grant proposal and prototype scope. The repository now ships a small dependency-free Python prototype of the discovery agent (mock data, transparent scoring, watchlists, CLI). Production Doma integrations will be added behind the same provider interface once SDK/API/testnet access is available.
 
@@ -148,6 +148,14 @@ PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
 # Or run the full local smoke test: server boot, unpaid 402, paid 200, receipt check
 python3 scripts/smoke_arc_paid_agent.py
 
+# Post-deploy live smoke against a public Gateway-mode paid agent
+ARC_PAID_AGENT_URL=https://paid-agent.example.test \
+python3 scripts/live_arc_gateway_smoke.py --expect-402-only
+
+ARC_PAID_AGENT_URL=https://paid-agent.example.test \
+ARC_LIVE_X_PAYMENT=redacted \
+python3 scripts/live_arc_gateway_smoke.py
+
 # Expose the same Arc tools over a minimal JSON-RPC/MCP-style stdio server
 printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
     PYTHONPATH=src python3 -m domainfi_toolkit.arc_mcp
@@ -161,7 +169,7 @@ python3 examples/arc-x402-paid-agent/client.py \
     --payment 'x402-test:domainfi.discovery.scan:25000'
 ```
 
-Arc fit: USDC-native gas, sub-second finality, EVM compatibility, and Circle Gateway/x402 make paid domain intelligence practical as pay-per-scan, pay-per-alert, and pay-per-API-call workflows. See [`docs/ARC_MVP.md`](docs/ARC_MVP.md) and [`examples/arc-x402-paid-agent/`](examples/arc-x402-paid-agent/).
+Arc fit: USDC-native gas, sub-second finality, EVM compatibility, and Circle Gateway/x402 make paid domain intelligence practical as pay-per-scan, pay-per-alert, and pay-per-API-call workflows. See [`docs/ARC_MVP.md`](docs/ARC_MVP.md), [`docs/ARC_PRODUCTION_DEPLOYMENT.md`](docs/ARC_PRODUCTION_DEPLOYMENT.md), and [`examples/arc-x402-paid-agent/`](examples/arc-x402-paid-agent/).
 
 ## Proposed milestones
 
