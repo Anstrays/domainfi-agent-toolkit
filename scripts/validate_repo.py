@@ -32,6 +32,7 @@ REQUIRED_FILES = [
     "docs/ROADMAP.md",
     "docs/GRANT_SCOPE.md",
     "docs/ARC_MVP.md",
+    "docs/ARC_PRODUCTION_DEPLOYMENT.md",
     "pyproject.toml",
     "src/domainfi_toolkit/__init__.py",
     "src/domainfi_toolkit/cli.py",
@@ -41,11 +42,13 @@ REQUIRED_FILES = [
     "src/domainfi_toolkit/data/sample_inventory.json",
     "examples/watchlists/brandable-ai.json",
     "examples/arc-x402-paid-agent/README.md",
+    "examples/arc-x402-paid-agent/.env.example",
     "examples/arc-x402-paid-agent/server.py",
     "examples/arc-x402-paid-agent/client.py",
     "examples/arc-x402-paid-agent/arc-mvp.config.json",
     "prompts/wire-arc-testnet-status.md",
     "scripts/smoke_arc_paid_agent.py",
+    "scripts/live_arc_gateway_smoke.py",
     "src/domainfi_toolkit/arc_mcp.py",
 ]
 SECRET_PATTERNS = [
