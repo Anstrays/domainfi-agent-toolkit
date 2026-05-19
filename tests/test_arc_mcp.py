@@ -26,6 +26,7 @@ class ArcMcpManifestTests(unittest.TestCase):
         tool_names = {tool["name"] for tool in manifest["tools"]}
         self.assertIn("domainfi_arc_payment_intent", tool_names)
         self.assertIn("domainfi_arc_payment_verify", tool_names)
+        self.assertIn("domainfi_arc_gateway_verify", tool_names)
         self.assertIn("domainfi_arc_paid_scan", tool_names)
         self.assertIn("domainfi_arc_unit_economics", tool_names)
         self.assertIn("production_replacement_boundary", manifest)

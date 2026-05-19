@@ -76,6 +76,21 @@ PYTHONPATH=src python3 -m domainfi_toolkit arc-verify \
   --payment 'x402-test:domainfi.discovery.scan:25000' \
   --json
 
+# Verify an opaque proof through a configured Circle Gateway/x402 verifier
+CIRCLE_GATEWAY_URL=https://gateway.example.test/v1 \
+CIRCLE_GATEWAY_API_KEY=redacted \
+PYTHONPATH=src python3 -m domainfi_toolkit arc-gateway-verify \
+  --resource domainfi.discovery.scan \
+  --price-microusd 25000 \
+  --payment '<opaque-x402-proof>' \
+  --json
+
+# Run the HTTP demo with Gateway verification instead of local x402-test proofs
+DOMAINFI_PAYMENT_MODE=gateway \
+CIRCLE_GATEWAY_URL=https://gateway.example.test/v1 \
+CIRCLE_GATEWAY_API_KEY=redacted \
+PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
+
 # List tools through the stdio JSON-RPC/MCP-style server
 printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
   PYTHONPATH=src python3 -m domainfi_toolkit.arc_mcp
@@ -84,25 +99,26 @@ printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
 python3 scripts/smoke_arc_paid_agent.py
 ```
 
-The manifest currently describes four safe tools:
+The manifest currently describes five safe tools:
 
 - `domainfi_arc_payment_intent`: build an Arc Testnet payment intent and 402 challenge.
 - `domainfi_arc_payment_verify`: verify the local demo proof and return a receipt shape.
+- `domainfi_arc_gateway_verify`: verify an opaque x402 proof through a configured Circle Gateway verifier endpoint.
 - `domainfi_arc_paid_scan`: run the paid DomainFi scan after verification succeeds.
 - `domainfi_arc_unit_economics`: calculate microUSD cost, price, and margin.
 
 The reusable coding-agent prompt is in [`prompts/wire-arc-testnet-status.md`](../prompts/wire-arc-testnet-status.md). It forces source grounding, explicit assumptions, TDD, and the Circle Gateway/x402 production replacement boundary.
 
-Important: this is an **x402-style local demo**, not production wire-compatible x402 verification. The deterministic `x402-test:*` proof exists only so the HTTP 402 -> paid retry loop can run without keys. Run the example on localhost only; do not expose it publicly until `verify_x402_payment_header(...)` is replaced with Circle Gateway/x402 verification.
+Important: the default mode is an **x402-style local demo**, not production wire-compatible x402 verification. The deterministic `x402-test:*` proof exists only so the HTTP 402 -> paid retry loop can run without keys. Production mode is now wired as a pluggable verifier seam (`arc-gateway-verify`, `domainfi_arc_gateway_verify`, and `--payment-mode gateway`), but it still requires a real Circle Gateway verifier URL/API key supplied through deployment secrets.
 
 ## Production wiring path
 
-Replace only the payment verification boundary:
+Production wiring now has explicit seams:
 
-- Seller side: replace `verify_x402_payment_header(...)` with Circle Gateway/x402 seller verification.
+- Seller side: set `DOMAINFI_PAYMENT_MODE=gateway`, `CIRCLE_GATEWAY_URL`, and `CIRCLE_GATEWAY_API_KEY` to verify opaque buyer proofs through a Circle Gateway/x402 verifier.
 - Buyer side: replace the `x402-test:*` header with a real Gateway/x402 payment flow.
 - Settlement: use Arc Testnet and Circle docs for wallet funding, Gateway unified balance, and USDC movement.
-- Data: replace `MockDomainProvider` with Doma API/SDK provider when endpoints are available.
+- Data: run `scan --provider doma-http` with `DOMA_API_URL` and `DOMA_API_KEY` to source a Doma-compatible HTTP JSON provider instead of bundled mock inventory.
 
 ## Unit economics thesis
 

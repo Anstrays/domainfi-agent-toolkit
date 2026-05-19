@@ -8,11 +8,13 @@ local/testnet use: no private keys, no custody, no production settlement.
 """
 
 import json
+import os
 import sys
 from typing import Any, TextIO
 
 from .agent import DiscoveryAgent
 from .arc import (
+    CircleGatewayVerifier,
     build_arc_mcp_manifest,
     build_payment_intent,
     estimate_unit_economics,
@@ -83,6 +85,21 @@ def call_tool(name: str, arguments: dict[str, Any] | None = None) -> dict[str, A
             args.get("payment"),
             resource=str(args.get("resource", "domainfi.discovery.scan")),
             amount_microusd=int(args.get("amount_microusd", args.get("price_microusd", 25_000))),
+        )
+    if name == "domainfi_arc_gateway_verify":
+        gateway_url = str(args.get("gateway_url") or os.environ.get("CIRCLE_GATEWAY_URL") or "")
+        if not gateway_url:
+            raise ValueError("gateway_url or CIRCLE_GATEWAY_URL is required")
+        verifier = CircleGatewayVerifier(
+            gateway_url,
+            api_key=args.get("gateway_api_key") or os.environ.get("CIRCLE_GATEWAY_API_KEY"),
+            timeout_seconds=int(args.get("gateway_timeout", os.environ.get("CIRCLE_GATEWAY_TIMEOUT", "20"))),
+        )
+        return verifier.verify(
+            payment=str(args.get("payment", "")),
+            resource=str(args.get("resource", "domainfi.discovery.scan")),
+            amount_microusd=int(args.get("amount_microusd", args.get("price_microusd", 25_000))),
+            pay_to=str(args.get("pay_to", "0x0000000000000000000000000000000000000000")),
         )
     if name == "domainfi_arc_paid_scan":
         return _paid_scan(args)

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -23,6 +24,7 @@ from typing import Sequence, TextIO
 from . import __version__
 from .agent import DiscoveryAgent
 from .arc import (
+    CircleGatewayVerifier,
     ARC_TESTNET,
     build_arc_mcp_manifest,
     build_payment_intent,
@@ -31,7 +33,7 @@ from .arc import (
     verify_payment_intent,
 )
 from .notifiers import ConsoleNotifier
-from .providers import MockDomainProvider
+from .providers import DomaHTTPProvider, MockDomainProvider
 from .scoring import explain as explain_score, load_weights, reset_weights
 from .watchlist import load_watchlists
 
@@ -60,6 +62,28 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Optional custom inventory JSON. Defaults to the bundled mock data.",
+    )
+    p_scan.add_argument(
+        "--provider",
+        choices=("mock", "doma-http"),
+        default=os.environ.get("DOMAINFI_PROVIDER", "mock"),
+        help="Domain data provider: bundled mock data or Doma-compatible HTTP API.",
+    )
+    p_scan.add_argument(
+        "--doma-api-url",
+        default=os.environ.get("DOMA_API_URL"),
+        help="Base URL for the Doma-compatible API (or DOMA_API_URL).",
+    )
+    p_scan.add_argument(
+        "--doma-api-key",
+        default=os.environ.get("DOMA_API_KEY"),
+        help="Bearer token for the Doma-compatible API (or DOMA_API_KEY).",
+    )
+    p_scan.add_argument(
+        "--provider-timeout",
+        type=int,
+        default=int(os.environ.get("DOMAINFI_PROVIDER_TIMEOUT", "20")),
+        help="Provider HTTP timeout in seconds (default: 20).",
     )
     p_scan.add_argument(
         "--limit",
@@ -162,6 +186,37 @@ def build_parser() -> argparse.ArgumentParser:
     p_arc_verify.add_argument("--payment", required=True, help="X-Payment header value to verify.")
     p_arc_verify.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     p_arc_verify.set_defaults(func=_cmd_arc_verify)
+
+    p_arc_gateway = sub.add_parser(
+        "arc-gateway-verify",
+        help="Verify an opaque x402 proof with a configured Circle Gateway verifier.",
+    )
+    p_arc_gateway.add_argument("--resource", default="domainfi.discovery.scan")
+    p_arc_gateway.add_argument("--price-microusd", type=int, default=25_000)
+    p_arc_gateway.add_argument(
+        "--pay-to",
+        default="0x0000000000000000000000000000000000000000",
+        help="Seller address expected by the verifier.",
+    )
+    p_arc_gateway.add_argument("--payment", required=True, help="Opaque X-Payment proof to verify.")
+    p_arc_gateway.add_argument(
+        "--gateway-url",
+        default=os.environ.get("CIRCLE_GATEWAY_URL"),
+        help="Circle Gateway/x402 verifier base URL (or CIRCLE_GATEWAY_URL).",
+    )
+    p_arc_gateway.add_argument(
+        "--gateway-api-key",
+        default=os.environ.get("CIRCLE_GATEWAY_API_KEY"),
+        help="Verifier bearer token (or CIRCLE_GATEWAY_API_KEY).",
+    )
+    p_arc_gateway.add_argument(
+        "--gateway-timeout",
+        type=int,
+        default=int(os.environ.get("CIRCLE_GATEWAY_TIMEOUT", "20")),
+        help="Gateway verifier timeout in seconds (default: 20).",
+    )
+    p_arc_gateway.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
+    p_arc_gateway.set_defaults(func=_cmd_arc_gateway_verify)
 
     return parser
 
@@ -266,6 +321,36 @@ def _cmd_arc_verify(args: argparse.Namespace, out: TextIO) -> int:
     return 0 if receipt["paid"] else 2
 
 
+def _cmd_arc_gateway_verify(args: argparse.Namespace, out: TextIO) -> int:
+    if not args.gateway_url:
+        print("error: --gateway-url or CIRCLE_GATEWAY_URL is required", file=sys.stderr)
+        return 2
+    if args.gateway_timeout < 1:
+        print("error: --gateway-timeout must be >= 1", file=sys.stderr)
+        return 2
+    try:
+        verifier = CircleGatewayVerifier(
+            args.gateway_url,
+            api_key=args.gateway_api_key,
+            timeout_seconds=args.gateway_timeout,
+        )
+        receipt = verifier.verify(
+            payment=args.payment,
+            resource=args.resource,
+            amount_microusd=args.price_microusd,
+            pay_to=args.pay_to,
+        )
+    except (TypeError, ValueError) as exc:
+        print(f"error: invalid Arc Gateway verification parameters: {exc}", file=sys.stderr)
+        return 2
+    if args.json:
+        print(json.dumps(receipt, indent=2, sort_keys=True), file=out)
+    else:
+        status = "accepted" if receipt.get("paid") else f"rejected: {receipt.get('reason', 'unknown')}"
+        print(f"Arc Gateway verification {status}", file=out)
+    return 0 if receipt.get("paid") else 2
+
+
 def _cmd_arc_mvp(args: argparse.Namespace, out: TextIO) -> int:
     try:
         economics = estimate_unit_economics(
@@ -319,6 +404,9 @@ def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
     if args.min_score is not None and not 0 <= args.min_score <= 100:
         print("error: --min-score must be in 0..100", file=sys.stderr)
         return 2
+    if args.provider == "doma-http" and not args.doma_api_url:
+        print("error: --doma-api-url or DOMA_API_URL is required for --provider doma-http", file=sys.stderr)
+        return 2
 
     try:
         watchlists = []
@@ -344,7 +432,24 @@ def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
             print(f"error: failed to load weights: {exc}", file=sys.stderr)
             return 2
 
-    if args.inventory:
+    if args.provider_timeout < 1:
+        print("error: --provider-timeout must be >= 1", file=sys.stderr)
+        return 2
+
+    if args.provider == "doma-http":
+        if not args.doma_api_url:
+            print("error: --doma-api-url or DOMA_API_URL is required for --provider doma-http", file=sys.stderr)
+            return 2
+        try:
+            provider = DomaHTTPProvider(
+                args.doma_api_url,
+                api_key=args.doma_api_key,
+                timeout_seconds=args.provider_timeout,
+            )
+        except ValueError as exc:
+            print(f"error: invalid Doma provider config: {exc}", file=sys.stderr)
+            return 2
+    elif args.inventory:
         try:
             provider = MockDomainProvider.from_json_file(args.inventory)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
@@ -361,6 +466,7 @@ def _cmd_scan(args: argparse.Namespace, out: TextIO) -> int:
 
     payload = {
         "version": __version__,
+        "provider": args.provider,
         "watchlists": [wl.name for wl in watchlists],
         "count": len(opportunities),
         "opportunities": [opp.to_dict() for opp in opportunities],

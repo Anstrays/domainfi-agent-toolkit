@@ -13,8 +13,11 @@ production Gateway/x402 implementation:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import json
 import re
 from typing import Any
+from urllib.parse import urljoin, urlparse
+from urllib.request import Request, urlopen
 
 
 _RESOURCE_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
@@ -276,7 +279,7 @@ def build_arc_builder_context() -> dict[str, Any]:
             "Return JSON payment intents, receipts, and unit economics for agent consumption.",
         ],
         "assumptions_and_unknowns": [
-            "Production Circle Gateway/x402 verification is intentionally not implemented in this repo.",
+            "Production Circle Gateway/x402 verification is pluggable through CircleGatewayVerifier, but requires an operator-managed verifier endpoint and secrets.",
             "A production seller address, policy, rate limits, and receipt storage must be configured outside the demo.",
             "Human wallet approval remains mandatory for real Arc Testnet transactions.",
         ],
@@ -323,6 +326,22 @@ def build_arc_mcp_manifest() -> dict[str, Any]:
                 },
             },
             {
+                "name": "domainfi_arc_gateway_verify",
+                "description": "Verify an opaque production x402 proof with a configured Circle Gateway verifier endpoint.",
+                "input_schema": {
+                    "type": "object",
+                    "required": ["payment", "gateway_url"],
+                    "properties": {
+                        "payment": {"type": "string"},
+                        "gateway_url": {"type": "string"},
+                        "gateway_api_key": {"type": "string"},
+                        "resource": {"type": "string", "pattern": _RESOURCE_RE.pattern},
+                        "amount_microusd": {"type": "integer", "minimum": 1},
+                        "pay_to": {"type": "string", "pattern": _EVM_ADDRESS_RE.pattern},
+                    },
+                },
+            },
+            {
                 "name": "domainfi_arc_paid_scan",
                 "description": "Run the paid DomainFi discovery scan after payment verification succeeds.",
                 "input_schema": {
@@ -349,8 +368,8 @@ def build_arc_mcp_manifest() -> dict[str, Any]:
             },
         ],
         "production_replacement_boundary": (
-            "Replace parse_x402_payment_header/verify_x402_payment_header with "
-            "Circle Gateway/x402 verification before accepting real payments."
+            "Use domainfi_arc_gateway_verify / CircleGatewayVerifier with a trusted "
+            "Circle Gateway/x402 verifier before accepting real payments."
         ),
         "safety": {
             "testnet_only": True,
@@ -396,6 +415,101 @@ def build_payment_intent(
     if clean_memo:
         intent["memo"] = clean_memo
     return intent
+
+
+def build_gateway_verification_request(
+    *,
+    payment: str,
+    resource: str,
+    amount_microusd: int,
+    pay_to: str,
+) -> dict[str, Any]:
+    """Build the explicit payload sent to a Circle Gateway/x402 verifier.
+
+    This function does not sign or submit transactions. It standardizes the
+    production verification seam so deployments can point at a trusted Gateway
+    verifier/facilitator without changing the paid-agent business logic.
+    """
+
+    return {
+        "payment": str(payment or "").strip(),
+        "resource": _validate_resource(resource),
+        "amount_microusd": _validate_positive_int(amount_microusd, name="amount_microusd"),
+        "pay_to": _validate_evm_address(pay_to, name="pay_to"),
+        "network": ARC_TESTNET.name,
+        "chain_id": ARC_TESTNET.chain_id,
+        "asset": "USDC",
+        "asset_decimals": 6,
+        "gateway_domain": 26,
+    }
+
+
+class CircleGatewayVerifier:
+    """Production-verifier seam for Circle Gateway/x402 payment proofs.
+
+    The toolkit never stores keys or performs autonomous settlement. This class
+    POSTs an opaque payment proof to a configured verifier endpoint and returns
+    a normalized receipt/rejection. Operators are expected to provide the
+    endpoint and secret through environment variables or a deployment secret
+    manager.
+    """
+
+    def __init__(self, base_url: str, *, api_key: str | None = None, timeout_seconds: int = 20) -> None:
+        clean_url = str(base_url or "").strip().rstrip("/") + "/"
+        parsed = urlparse(clean_url)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("Gateway verifier URL must be an http(s) URL")
+        if isinstance(timeout_seconds, bool) or int(timeout_seconds) <= 0:
+            raise ValueError("timeout_seconds must be > 0")
+        self.base_url = clean_url
+        self.api_key = str(api_key).strip() if api_key else None
+        self.timeout_seconds = int(timeout_seconds)
+
+    def verify(self, *, payment: str, resource: str, amount_microusd: int, pay_to: str) -> dict[str, Any]:
+        payload = build_gateway_verification_request(
+            payment=payment,
+            resource=resource,
+            amount_microusd=amount_microusd,
+            pay_to=pay_to,
+        )
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+            "User-Agent": "domainfi-agent-toolkit/0.1",
+        }
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+        request = Request(
+            urljoin(self.base_url, "x402/verify"),
+            data=json.dumps(payload, sort_keys=True).encode("utf-8"),
+            headers=headers,
+            method="POST",
+        )
+        try:
+            with urlopen(request, timeout=self.timeout_seconds) as response:
+                raw = response.read().decode("utf-8")
+            gateway_payload = json.loads(raw)
+        except Exception as exc:  # noqa: BLE001 - normalize and redact before returning to agents.
+            return {
+                "paid": False,
+                "status": "rejected",
+                "reason": self._redact(str(exc)),
+                "production_verifier": "circle_gateway",
+                "request": {key: value for key, value in payload.items() if key != "payment"},
+            }
+        paid = bool(gateway_payload.get("paid") or gateway_payload.get("status") == "accepted")
+        return {
+            "paid": paid,
+            "status": "accepted" if paid else "rejected",
+            "production_verifier": "circle_gateway",
+            "gateway_response": gateway_payload,
+            "network": ARC_TESTNET.to_dict(),
+        }
+
+    def _redact(self, text: str) -> str:
+        if self.api_key:
+            return text.replace(self.api_key, "[REDACTED]")
+        return text
 
 
 def verify_payment_intent(header: str | None, *, resource: str, amount_microusd: int) -> dict[str, Any]:
