@@ -93,6 +93,14 @@ class CliTests(unittest.TestCase):
                 self.assertIsInstance(signal["explanation"], str)
                 self.assertTrue(signal["explanation"])
 
+    def test_scan_does_not_expose_doma_http_provider(self) -> None:
+        out = io.StringIO()
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            with self.assertRaises(SystemExit):
+                main(["scan", "--watchlist", str(EXAMPLE_WATCHLIST), "--provider", "doma-http"], stdout=out)
+        self.assertIn("unrecognized arguments", err.getvalue())
+
     def test_scan_rejects_non_positive_limit(self) -> None:
         out = io.StringIO()
         err = io.StringIO()

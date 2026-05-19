@@ -118,7 +118,6 @@ Production wiring now has explicit seams:
 - Seller side: set `DOMAINFI_PAYMENT_MODE=gateway`, `CIRCLE_GATEWAY_URL`, and `CIRCLE_GATEWAY_API_KEY` to verify opaque buyer proofs through a Circle Gateway/x402 verifier.
 - Buyer side: replace the `x402-test:*` header with a real Gateway/x402 payment flow.
 - Settlement: use Arc Testnet and Circle docs for wallet funding, Gateway unified balance, and USDC movement.
-- Data: run `scan --provider doma-http` with `DOMA_API_URL` and `DOMA_API_KEY` to source a Doma-compatible HTTP JSON provider instead of bundled mock inventory.
 
 ## Unit economics thesis
 

@@ -136,14 +136,6 @@ PYTHONPATH=src python3 -m domainfi_toolkit arc-gateway-verify \
     --payment '<opaque-x402-proof>' \
     --json
 
-# Scan with a Doma-compatible HTTP provider instead of bundled mock inventory
-DOMA_API_URL=https://api.example.test/v1 \
-DOMA_API_KEY=redacted \
-PYTHONPATH=src python3 -m domainfi_toolkit scan \
-    --watchlist examples/watchlists/brandable-ai.json \
-    --provider doma-http \
-    --json
-
 # Run the local paid agent endpoint
 PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
 
