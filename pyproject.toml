@@ -26,6 +26,7 @@ dev = []
 
 [project.scripts]
 domainfi-agent = "domainfi_toolkit.cli:main"
+domainfi-arc-mcp = "domainfi_toolkit.arc_mcp:main"
 
 [project.urls]
 Homepage = "https://anstrays.github.io/domainfi-agent-toolkit/"

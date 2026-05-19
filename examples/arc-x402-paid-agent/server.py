@@ -21,9 +21,12 @@ if str(SRC) not in sys.path:
 
 from domainfi_toolkit.agent import DiscoveryAgent  # noqa: E402
 from domainfi_toolkit.arc import (  # noqa: E402
+    build_arc_mcp_manifest,
     build_paid_discovery_payload,
+    build_payment_intent,
     build_payment_required_response,
     estimate_unit_economics,
+    verify_payment_intent,
     verify_x402_payment_header,
 )
 from domainfi_toolkit.providers import MockDomainProvider  # noqa: E402
@@ -45,16 +48,22 @@ class PaidDiscoveryHandler(BaseHTTPRequestHandler):
 
         payment_header = self.headers.get("X-Payment")
         if not verify_x402_payment_header(payment_header, resource=RESOURCE, amount_microusd=PRICE_MICROUSD):
-            self._send_json(
-                402,
-                build_payment_required_response(
-                    resource=RESOURCE,
-                    amount_microusd=PRICE_MICROUSD,
-                    pay_to=PAY_TO,
-                ),
+            challenge = build_payment_required_response(
+                resource=RESOURCE,
+                amount_microusd=PRICE_MICROUSD,
+                pay_to=PAY_TO,
             )
+            challenge["payment_intent"] = build_payment_intent(
+                resource=RESOURCE,
+                amount_microusd=PRICE_MICROUSD,
+                pay_to=PAY_TO,
+                memo="paid DomainFi discovery scan",
+            )
+            challenge["mcp_tools"] = build_arc_mcp_manifest()
+            self._send_json(402, challenge)
             return
 
+        payment_receipt = verify_payment_intent(payment_header, resource=RESOURCE, amount_microusd=PRICE_MICROUSD)
         watchlists = load_watchlists(WATCHLIST_PATH)
         opportunities = DiscoveryAgent(provider=MockDomainProvider.default()).scan(watchlists=watchlists, limit=3)
         economics = estimate_unit_economics(
@@ -70,6 +79,8 @@ class PaidDiscoveryHandler(BaseHTTPRequestHandler):
             amount_microusd=PRICE_MICROUSD,
         )
         payload["unit_economics"] = economics.to_dict()
+        payload["payment_receipt"] = payment_receipt
+        payload["mcp_tools"] = build_arc_mcp_manifest()
         payload["opportunities"] = [opportunity.to_dict() for opportunity in opportunities]
         self._send_json(200, payload)
 

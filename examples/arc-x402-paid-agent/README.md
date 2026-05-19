@@ -28,6 +28,28 @@ The local payment proof is deliberately fake and deterministic. Production wirin
 - `GET /scan`
 - Required payment header: `X-Payment: x402-test:domainfi.discovery.scan:25000`
 - Price: `25,000 microUSD` (`$0.025`) in USDC on Arc Testnet
+- Unpaid response includes a `payment_intent` and `mcp_tools` manifest so agent clients can discover the payment/verification flow.
+- Paid response includes `payment_receipt`, `unit_economics`, and the paid opportunities payload.
+
+## CLI helpers
+
+```bash
+# MCP-style tool manifest
+PYTHONPATH=src python3 -m domainfi_toolkit arc-tools --json
+
+# Payment intent / receipt helpers
+PYTHONPATH=src python3 -m domainfi_toolkit arc-intent --json
+PYTHONPATH=src python3 -m domainfi_toolkit arc-verify \
+  --payment 'x402-test:domainfi.discovery.scan:25000' \
+  --json
+
+# JSON-RPC/MCP-style stdio server
+printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
+  PYTHONPATH=src python3 -m domainfi_toolkit.arc_mcp
+
+# Full local HTTP smoke test
+python3 scripts/smoke_arc_paid_agent.py
+```
 
 ## Why this example matters
 

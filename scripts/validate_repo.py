@@ -44,6 +44,9 @@ REQUIRED_FILES = [
     "examples/arc-x402-paid-agent/server.py",
     "examples/arc-x402-paid-agent/client.py",
     "examples/arc-x402-paid-agent/arc-mvp.config.json",
+    "prompts/wire-arc-testnet-status.md",
+    "scripts/smoke_arc_paid_agent.py",
+    "src/domainfi_toolkit/arc_mcp.py",
 ]
 SECRET_PATTERNS = [
     re.compile(r"ghp_[A-Za-z0-9_]{20,}"),

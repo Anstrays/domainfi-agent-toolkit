@@ -115,8 +115,29 @@ The repo now includes an Arc/Circle-native monetization wedge: a dependency-free
 # Print Arc Testnet config, x402 challenge payload, and unit economics
 PYTHONPATH=src python3 -m domainfi_toolkit arc-mvp --json
 
+# Print the MCP-style Arc paid-agent tool manifest for coding agents
+PYTHONPATH=src python3 -m domainfi_toolkit arc-tools --json
+
+# Build a single payment intent and local demo proof
+PYTHONPATH=src python3 -m domainfi_toolkit arc-intent \
+    --resource domainfi.discovery.scan \
+    --price-microusd 25000 \
+    --json
+
+# Verify a local demo payment proof and receive a machine-readable receipt
+PYTHONPATH=src python3 -m domainfi_toolkit arc-verify \
+    --payment 'x402-test:domainfi.discovery.scan:25000' \
+    --json
+
 # Run the local paid agent endpoint
 PYTHONPATH=src python3 examples/arc-x402-paid-agent/server.py --port 8765
+
+# Or run the full local smoke test: server boot, unpaid 402, paid 200, receipt check
+python3 scripts/smoke_arc_paid_agent.py
+
+# Expose the same Arc tools over a minimal JSON-RPC/MCP-style stdio server
+printf '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}\n' | \
+    PYTHONPATH=src python3 -m domainfi_toolkit.arc_mcp
 
 # Request without payment: returns 402 payment instructions
 python3 examples/arc-x402-paid-agent/client.py --url http://127.0.0.1:8765/scan
